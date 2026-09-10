@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -18,10 +19,39 @@ const Login = () => {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/admin/dashboard');
+      // 1. Authenticate user with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Query the 'admin' collection for a document where the email field matches
+      const q = query(collection(db, 'admin'), where('email', '==', user.email));
+      const querySnapshot = await getDocs(q);
+
+      let isAdmin = false;
+      querySnapshot.forEach((doc) => {
+        if (doc.data().role === 'admin') {
+          isAdmin = true;
+        }
+      });
+
+      if (isAdmin) {
+        navigate('/admin/dashboard');
+      } else {
+        // Sign out unauthorized user
+        await signOut(auth);
+        setError("Access denied. You do not have Stacon League administrative privileges.");
+      }
     } catch (err) {
-      setError("Invalid administrative credentials.");
+      console.error("Login Error Code:", err.code);
+      console.error("Login Error Message:", err.message);
+      
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError("Invalid email or password.");
+      } else if (err.code === 'permission-denied') {
+        setError("Database permission denied. Check your Firestore security rules.");
+      } else {
+        setError(`Login failed: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -30,7 +60,7 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Admin Portal | St. Jerome League</title>
+        <title>Admin Portal | Stacon League</title>
       </Helmet>
 
       <style>{`
@@ -41,32 +71,44 @@ const Login = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #04060d;
+          background-color: #0c1c8c;
           font-family: 'Plus Jakarta Sans', sans-serif;
           padding: 40px 20px;
           box-sizing: border-box;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .login-page::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
         }
 
         .login-card {
-          background: rgba(15, 23, 42, 0.65);
+          background: rgba(12, 28, 140, 0.45);
           backdrop-filter: blur(16px);
           width: 100%;
           max-width: 440px;
           border-radius: 24px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           overflow: hidden;
         }
 
         .login-header {
           padding: 40px 30px 20px;
           text-align: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .header-tag {
           font-family: 'Cinzel', serif;
-          color: #facc15;
+          color: #d97706;
           font-size: 0.75rem;
           font-weight: 700;
           letter-spacing: 2px;
@@ -97,7 +139,7 @@ const Login = () => {
           font-family: 'Cinzel', serif;
           font-size: 0.7rem;
           font-weight: 700;
-          color: #facc15;
+          color: #d97706;
           margin-bottom: 8px;
           text-transform: uppercase;
           letter-spacing: 1px;
@@ -112,14 +154,14 @@ const Login = () => {
         .input-wrapper svg {
           position: absolute;
           left: 14px;
-          color: #64748b;
+          color: #94a3b8;
           transition: color 0.3s ease;
         }
 
         .c-input {
           width: 100%;
-          background: rgba(4, 6, 13, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(4, 6, 13, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           padding: 14px 14px 14px 44px;
           border-radius: 12px;
           font-family: 'Plus Jakarta Sans', sans-serif;
@@ -132,33 +174,33 @@ const Login = () => {
         }
 
         .c-input:focus {
-          border-color: #facc15;
-          background: rgba(4, 6, 13, 0.9);
-          box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
+          border-color: #d97706;
+          background: rgba(4, 6, 13, 0.8);
+          box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
         }
 
         .c-input:focus + svg,
         .input-wrapper:focus-within svg {
-          color: #facc15;
+          color: #d97706;
         }
 
         .error-msg {
-          background: rgba(220, 38, 38, 0.1);
+          background: rgba(220, 38, 38, 0.15);
           color: #f87171;
           padding: 12px 16px;
           border-radius: 10px;
           font-size: 0.85rem;
           font-weight: 600;
           margin-bottom: 20px;
-          border: 1px solid rgba(220, 38, 38, 0.2);
+          border: 1px solid rgba(220, 38, 38, 0.3);
           text-align: center;
         }
 
         .login-btn {
           width: 100%;
           padding: 16px;
-          background: #facc15;
-          color: #04060d;
+          background: #d97706;
+          color: #ffffff;
           border: none;
           border-radius: 12px;
           font-family: 'Plus Jakarta Sans', sans-serif;
@@ -175,9 +217,9 @@ const Login = () => {
         }
 
         .login-btn:hover:not(:disabled) {
-          background: #ffe066;
+          background: #b45309;
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(250, 204, 21, 0.25);
+          box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
         }
 
         .login-btn:disabled {
@@ -190,7 +232,7 @@ const Login = () => {
           width: 100%;
           text-align: center;
           margin-top: 22px;
-          color: #64748b;
+          color: #94a3b8;
           text-decoration: none;
           font-size: 0.85rem;
           font-weight: 600;
@@ -198,15 +240,15 @@ const Login = () => {
         }
 
         .back-home:hover {
-          color: #facc15;
+          color: #d97706;
         }
       `}</style>
 
       <div className="login-page">
         <div className="login-card">
           <div className="login-header">
-            <ShieldCheck size={44} color="#facc15" style={{ margin: '0 auto' }} />
-            <span className="header-tag">St. Jerome League</span>
+            <ShieldCheck size={44} color="#d97706" style={{ margin: '0 auto' }} />
+            <span className="header-tag">Stacon League</span>
             <h2>Admin Portal</h2>
           </div>
 
@@ -221,7 +263,7 @@ const Login = () => {
                   <input 
                     type="email" 
                     className="c-input"
-                    placeholder="name@league.com" 
+                    placeholder="admin@staconleague.com" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required 

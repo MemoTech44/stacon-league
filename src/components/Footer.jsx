@@ -33,7 +33,7 @@ const Footer = () => {
           left: 0;
           width: 100%;
           height: 4px;
-          background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
+          background: linear-gradient(90deg, #0c1c8c, #f3e73f, #0c1c8c);
         }
 
         .footer-container {
@@ -70,7 +70,7 @@ const Footer = () => {
         }
 
         .footer-accent { 
-          color: #d97706; 
+          color: #f3e73f; 
         }
 
         .footer-motto {

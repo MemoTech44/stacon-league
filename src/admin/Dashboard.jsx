@@ -31,7 +31,7 @@ const Dashboard = () => {
   const pageInfo = {
     overview: { 
       title: "League Operations Hub", 
-      desc: "The central control panel for managing St. Jerome League operations. Coordinate schedules, oversee player registrations, and publish news updates—all synchronized instantly with the live portal." 
+      desc: "The central control panel for managing Stacon League operations. Coordinate schedules, oversee player registrations, and publish news updates—all synchronized instantly with the live portal." 
     },
     news: { title: "News Manager", desc: "Compose, edit, and publish breaking news, official press releases, and announcements directly to the public portal." },
     fixtures: { title: "Match Fixtures", desc: "Organize the season by setting up upcoming match dates, kick-off times, and venues for all participating clubs." },
@@ -93,7 +93,7 @@ const Dashboard = () => {
   return (
     <div className="admin-root">
       <Helmet>
-        <title>Admin Dashboard | St. Jerome League</title>
+        <title>Admin Dashboard | Stacon League</title>
       </Helmet>
 
       <style>{`
@@ -101,12 +101,12 @@ const Dashboard = () => {
         
         .admin-root { 
           min-height: 100vh; 
-          background-color: #04060d; 
+          background: linear-gradient(135deg, rgba(6, 13, 61, 0.9) 0%, rgba(12, 28, 140, 0.2) 65%), #060d3d; 
           font-family: 'Plus Jakarta Sans', sans-serif; 
           padding-top: 100px; 
           display: flex; 
           flex-direction: column; 
-          color: #ffffff;
+          color: #e2e8f0;
         }
         
         .navbar { 
@@ -114,21 +114,22 @@ const Dashboard = () => {
           top: 0; 
           width: 100%; 
           height: 75px; 
-          background: rgba(4, 6, 13, 0.85); 
+          background: rgba(6, 13, 61, 0.85); 
           backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
+          border-bottom: 1px solid rgba(243, 231, 63, 0.2); 
           display: flex; 
           align-items: center; 
           justify-content: space-between; 
           padding: 0 5%; 
           z-index: 1000; 
           box-sizing: border-box;
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
         .brand-mobile {
           font-family: 'Cinzel', serif;
           font-weight: 800;
-          color: #facc15;
+          color: #f3e73f;
           font-size: 0.9rem;
           text-transform: uppercase;
           letter-spacing: 1.5px;
@@ -148,7 +149,7 @@ const Dashboard = () => {
           padding: 10px 14px; 
           border: 1px solid transparent; 
           background: transparent; 
-          color: #94a3b8; 
+          color: #e2e8f0; 
           font-family: 'Plus Jakarta Sans', sans-serif;
           font-weight: 700; 
           font-size: 0.72rem; 
@@ -160,15 +161,16 @@ const Dashboard = () => {
         }
 
         .link-btn.active { 
-          background: rgba(250, 204, 21, 0.1); 
-          color: #facc15; 
-          border-color: rgba(250, 204, 21, 0.3);
-          box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);
+          background: rgba(243, 231, 63, 0.15); 
+          color: #f3e73f; 
+          border-color: rgba(243, 231, 63, 0.4);
+          box-shadow: 0 0 15px rgba(243, 231, 63, 0.2);
         }
 
         .link-btn:hover:not(.active) { 
-          background: rgba(255, 255, 255, 0.05); 
+          background: rgba(255, 255, 255, 0.08); 
           color: #ffffff; 
+          border-color: rgba(255, 255, 255, 0.15);
         }
 
         .mobile-drawer { 
@@ -177,10 +179,10 @@ const Dashboard = () => {
           left: 0;
           bottom: 0; 
           width: 290px; 
-          background: #090d16; 
+          background: #081146; 
           padding: 24px 20px; 
-          border-right: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8); 
+          border-right: 1px solid rgba(243, 231, 63, 0.2);
+          box-shadow: 20px 0 50px rgba(0, 0, 0, 0.9); 
           z-index: 2000; 
           display: flex; 
           flex-direction: column; 
@@ -199,12 +201,12 @@ const Dashboard = () => {
           justify-content: space-between;
           padding-bottom: 20px;
           margin-bottom: 10px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .drawer-title {
           font-family: 'Cinzel', serif;
-          color: #facc15;
+          color: #f3e73f;
           font-weight: 700;
           font-size: 0.85rem;
           letter-spacing: 1px;
@@ -214,7 +216,7 @@ const Dashboard = () => {
         .overlay { 
           position: fixed; 
           inset: 0; 
-          background: rgba(0, 0, 0, 0.7); 
+          background: rgba(6, 13, 61, 0.85); 
           backdrop-filter: blur(6px); 
           z-index: 1500; 
           animation: fadeIn 0.2s ease;
@@ -235,19 +237,20 @@ const Dashboard = () => {
           letter-spacing: 1.5px;
           margin: 0; 
           line-height: 1;
+          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
         
         .title-divider { 
           height: 4px; 
           width: 70px; 
-          background: #facc15; 
+          background: #f3e73f; 
           margin: 18px auto; 
           border-radius: 4px; 
-          box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+          box-shadow: 0 0 15px rgba(243, 231, 63, 0.6);
         }
 
         .description-text { 
-          color: #94a3b8; 
+          color: #e2e8f0; 
           font-size: clamp(0.95rem, 2.5vw, 1.1rem); 
           max-width: 800px; 
           margin: 0 auto; 
@@ -256,22 +259,27 @@ const Dashboard = () => {
         }
 
         .footer { 
-          background: #04060d; 
-          border-top: 1px solid rgba(255, 255, 255, 0.05); 
+          background: rgba(6, 13, 61, 0.95); 
+          border-top: 1px solid rgba(243, 231, 63, 0.15); 
           padding: 40px 20px; 
           margin-top: 60px; 
           text-align: center; 
         }
 
         .mobile-btn { 
-          background: rgba(255, 255, 255, 0.05); 
-          border: 1px solid rgba(255, 255, 255, 0.1); 
+          background: rgba(12, 28, 140, 0.5); 
+          border: 1px solid rgba(243, 231, 63, 0.35); 
           padding: 10px; 
-          border-radius: 10px; 
+          border-radius: 12px; 
           cursor: pointer; 
           display: none; 
           align-items: center;
           justify-content: center;
+          transition: all 0.3s ease;
+        }
+
+        .mobile-btn:hover {
+          background: rgba(243, 231, 63, 0.15);
         }
 
         .time-badge {
@@ -279,14 +287,14 @@ const Dashboard = () => {
           align-items: center;
           justify-content: center;
           gap: 12px;
-          color: #facc15;
+          color: #f3e73f;
           font-size: 0.85rem;
           font-weight: 700;
-          background: rgba(15, 23, 42, 0.6);
+          background: rgba(12, 28, 140, 0.4);
           padding: 10px 20px;
           border-radius: 30px;
-          border: 1px solid rgba(250, 204, 21, 0.2);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(243, 231, 63, 0.3);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
           flex-wrap: wrap;
         }
 
@@ -306,14 +314,14 @@ const Dashboard = () => {
 
       {/* Navigation Header */}
       <nav className="navbar">
-        <span className="brand-mobile">St. Jerome League Admin</span>
+        <span className="brand-mobile">Stacon League Admin</span>
 
         <button 
           className="mobile-btn" 
           onClick={() => setIsMobileMenuOpen(true)}
           aria-label="Open Navigation Menu"
         >
-          <Menu size={20} color="#facc15" />
+          <Menu size={20} color="#f3e73f" />
         </button>
 
         <div className="desktop-links">
@@ -348,7 +356,7 @@ const Dashboard = () => {
             onClick={() => setIsMobileMenuOpen(false)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
           >
-            <X size={20} color="#94a3b8" />
+            <X size={20} color="#e2e8f0" />
           </button>
         </div>
 
@@ -363,7 +371,7 @@ const Dashboard = () => {
           </button>
         ))}
         
-        <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
           <button 
             onClick={() => signOut(auth).then(() => navigate('/admin/login'))} 
             className="link-btn" 
@@ -385,7 +393,7 @@ const Dashboard = () => {
             <div style={{ marginTop: '25px', animation: 'fadeIn 0.5s ease' }}>
               <h4 style={{ 
                 fontFamily: 'Cinzel, serif',
-                color: '#facc15', 
+                color: '#f3e73f', 
                 textTransform: 'uppercase', 
                 letterSpacing: '2px', 
                 fontWeight: 700, 
@@ -397,10 +405,10 @@ const Dashboard = () => {
               
               <div className="time-badge">
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={15} color="#facc15" /> 
+                  <Clock size={15} color="#f3e73f" /> 
                   {currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
                 </span>
-                <span style={{ opacity: 0.3 }}>•</span>
+                <span style={{ opacity: 0.4 }}>•</span>
                 <span>{currentTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </div>
@@ -421,10 +429,10 @@ const Dashboard = () => {
 
       {/* Footer */}
       <footer className="footer">
-        <div style={{ fontFamily: 'Cinzel, serif', color: '#facc15', fontSize: '0.9rem', marginBottom: '6px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>
-          St. Jerome League
+        <div style={{ fontFamily: 'Cinzel, serif', color: '#f3e73f', fontSize: '0.9rem', marginBottom: '6px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>
+          Stacon League
         </div>
-        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', margin: 0 }}>
+        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', margin: 0 }}>
           ADMINISTRATOR PORTAL • SECURE SESSION ACTIVE
         </p>
       </footer>
@@ -436,22 +444,22 @@ const Overview = ({ stats, loading, setTab }) => (
   <div style={{ paddingBottom: '60px' }}>
     <style>{`
       .action-banner { 
-        background: rgba(15, 23, 42, 0.65); 
+        background: linear-gradient(135deg, rgba(12, 28, 140, 0.45) 0%, rgba(6, 13, 61, 0.85) 100%); 
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(243, 231, 63, 0.25);
         border-radius: 28px; 
         padding: 40px 24px; 
         margin-bottom: 40px; 
-        color: white; 
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); 
+        color: #ffffff; 
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); 
       }
 
       .btn-primary-action {
         padding: 14px 28px; 
         border-radius: 12px; 
         border: none; 
-        background: #facc15; 
-        color: #04060d; 
+        background: #f3e73f; 
+        color: #060d3d; 
         font-weight: 800; 
         cursor: pointer; 
         display: flex; 
@@ -462,20 +470,21 @@ const Overview = ({ stats, loading, setTab }) => (
         text-transform: uppercase;
         letter-spacing: 1px;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(243, 231, 63, 0.3);
       }
 
       .btn-primary-action:hover {
-        background: #ffe066;
+        background: #fff066;
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(250, 204, 21, 0.25);
+        box-shadow: 0 6px 20px rgba(243, 231, 63, 0.45);
       }
 
       .btn-secondary-action {
         padding: 14px 28px; 
         border-radius: 12px; 
-        border: 1px solid rgba(255, 255, 255, 0.15); 
-        background: rgba(4, 6, 13, 0.6); 
-        color: white; 
+        border: 1px solid rgba(243, 231, 63, 0.4); 
+        background: rgba(12, 28, 140, 0.3); 
+        color: #e2e8f0; 
         font-weight: 700; 
         cursor: pointer; 
         font-size: 0.85rem;
@@ -488,9 +497,9 @@ const Overview = ({ stats, loading, setTab }) => (
       }
 
       .btn-secondary-action:hover {
-        border-color: #facc15;
-        color: #facc15;
-        background: rgba(4, 6, 13, 0.9);
+        border-color: #f3e73f;
+        color: #f3e73f;
+        background: rgba(243, 231, 63, 0.1);
       }
 
       .stat-grid { 
@@ -500,11 +509,11 @@ const Overview = ({ stats, loading, setTab }) => (
       }
 
       .interactive-card { 
-        background: rgba(15, 23, 42, 0.65); 
+        background: linear-gradient(135deg, rgba(12, 28, 140, 0.3) 0%, rgba(6, 13, 61, 0.7) 100%); 
         backdrop-filter: blur(16px);
         padding: 32px 20px; 
         border-radius: 20px; 
-        border: 1px solid rgba(255, 255, 255, 0.08); 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
         text-align: center; 
         cursor: pointer; 
         transition: all 0.3s ease;
@@ -512,12 +521,12 @@ const Overview = ({ stats, loading, setTab }) => (
 
       .interactive-card:hover { 
         transform: translateY(-6px); 
-        border-color: #facc15; 
-        box-shadow: 0 10px 30px rgba(250, 204, 21, 0.1); 
+        border-color: #f3e73f; 
+        box-shadow: 0 10px 30px rgba(243, 231, 63, 0.2); 
       }
 
       .interactive-card h4 { 
-        color: #94a3b8; 
+        color: #e2e8f0; 
         font-family: 'Cinzel', serif;
         font-size: 0.7rem; 
         text-transform: uppercase; 
@@ -529,7 +538,7 @@ const Overview = ({ stats, loading, setTab }) => (
       .interactive-card h2 { 
         font-family: 'Bebas Neue', cursive; 
         font-size: clamp(2.5rem, 4vw, 3.5rem); 
-        color: #facc15; 
+        color: #f3e73f; 
         margin: 0; 
         line-height: 1; 
       }
@@ -567,7 +576,7 @@ const Overview = ({ stats, loading, setTab }) => (
         Administrative Hub
       </h3>
       <p style={{
-        color: '#94a3b8', 
+        color: '#e2e8f0', 
         fontSize: 'clamp(0.9rem, 2vw, 1.05rem)', 
         maxWidth: '700px', 
         margin: '0 auto 30px', 
@@ -603,7 +612,7 @@ const Overview = ({ stats, loading, setTab }) => (
         <h4>League News</h4>
         <h2>{loading ? '..' : stats.news}</h2>
       </div>
-      <div className="interactive-card" style={{ borderBottom: '3px solid #facc15' }} onClick={() => setTab('inbox')}>
+      <div className="interactive-card" style={{ borderBottom: '3px solid #f3e73f' }} onClick={() => setTab('inbox')}>
         <h4>Fan Inbox</h4>
         <h2>{loading ? '..' : stats.messages}</h2>
       </div>

@@ -18,7 +18,7 @@ const TeamManager = () => {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   
-  // Form State (Treasurer and Rep removed)
+  // Form State
   const [teamName, setTeamName] = useState('');
   const [logo, setLogo] = useState(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState('');
@@ -34,12 +34,13 @@ const TeamManager = () => {
   const fetchTeams = async () => {
     const querySnapshot = await getDocs(collection(db, "clubs"));
     const teamData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setTeams(teamData.sort((a, b) => a.name.localeCompare(b.name)));
+    // Fixed: changed a.name to a.teamName (matching the database payload property)
+    setTeams(teamData.sort((a, b) => (a.teamName || '').localeCompare(b.teamName || '')));
   };
 
   const handleEditClick = (team) => {
     setEditingId(team.id);
-    setTeamName(team.name || '');
+    setTeamName(team.teamName || team.name || ''); // Handles both old and new data models gracefully
     setExistingLogoUrl(team.logoUrl || '');
     setChairman(team.chairman || '');
     setCoach(team.coach || '');
@@ -75,7 +76,8 @@ const TeamManager = () => {
       }
 
       const teamPayload = {
-        name: teamName,
+        teamName, // Consistent property name for sorting and rendering
+        name: teamName, // Kept for backwards compatibility with other pages if needed
         logoUrl,
         chairman,
         coach,
@@ -298,7 +300,7 @@ const TeamManager = () => {
               <label>Club Crest / Logo</label>
               <div className="upload-area" onClick={() => document.getElementById('logoInput').click()}>
                 <p style={{margin: 0, fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700 }}>
-                  {logo ? logo.name : existingLogoUrl ? "Change Current Logo" : "Upload High-Res Logo"}
+                  {logo ? logo.name : existingLogoUrl ? "Logo Loaded (Click to change)" : "Upload High-Res Logo"}
                 </p>
                 <input id="logoInput" type="file" hidden accept="image/*" onChange={(e) => setLogo(e.target.files[0])} />
               </div>
@@ -357,12 +359,12 @@ const TeamManager = () => {
             </div>
 
             {team.logoUrl ? (
-              <img src={team.logoUrl} alt={team.name} />
+              <img src={team.logoUrl} alt={team.teamName || team.name} />
             ) : (
               <div style={{ padding: '15px' }}><Shield size={50} color="#94a3b8" /></div>
             )}
             
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>{team.name}</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>{team.teamName || team.name}</h4>
             <p style={{ margin: '0 0 15px 0', fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>{team.captain || 'No Captain Assigned'}</p>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>

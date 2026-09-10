@@ -78,26 +78,38 @@ const NewsManager = () => {
     setLoading(true);
     try {
       let imageUrl = existingImageUrl;
-      if (image) {
-        const imageRef = ref(storage, `news/${Date.now()}_${image.name}`);
-        await uploadBytes(imageRef, image);
-        imageUrl = await getDownloadURL(imageRef);
+      
+      // Check if storage is available and an image was selected
+      if (image && storage) {
+        try {
+          const imageRef = ref(storage, `news/${Date.now()}_${image.name}`);
+          await uploadBytes(imageRef, image);
+          imageUrl = await getDownloadURL(imageRef);
+        } catch (storageError) {
+          console.warn("Storage upload failed, proceeding without new image upload:", storageError);
+        }
       }
 
       if (editingId) {
         await updateDoc(doc(db, "news", editingId), {
-          title, content, imageUrl, updatedAt: serverTimestamp(),
+          title, 
+          content, 
+          imageUrl, 
+          updatedAt: serverTimestamp(),
         });
       } else {
         await addDoc(collection(db, "news"), {
-          title, content, imageUrl, createdAt: serverTimestamp(),
+          title, 
+          content, 
+          imageUrl, 
+          createdAt: serverTimestamp(),
         });
       }
       resetForm();
       fetchNews();
     } catch (error) {
-      console.error(error);
-      alert("Error saving article.");
+      console.error("Error saving article:", error);
+      alert("Error saving article. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +120,10 @@ const NewsManager = () => {
       try {
         await deleteDoc(doc(db, "news", id));
         fetchNews();
-      } catch (error) { alert("Error deleting."); }
+      } catch (error) { 
+        console.error("Error deleting:", error);
+        alert("Error deleting article."); 
+      }
     }
   };
 
@@ -134,11 +149,11 @@ const NewsManager = () => {
         }
 
         .editor-card { 
-          background: rgba(15, 23, 42, 0.65); 
+          background: linear-gradient(135deg, rgba(12, 28, 140, 0.35) 0%, rgba(6, 13, 61, 0.8) 100%); 
           backdrop-filter: blur(16px);
           border-radius: 24px; 
           padding: 24px; 
-          border: 1px solid rgba(255, 255, 255, 0.08); 
+          border: 1px solid rgba(243, 231, 63, 0.2); 
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
           margin-bottom: 40px; 
           text-align: left;
@@ -151,7 +166,7 @@ const NewsManager = () => {
           align-items: center; 
           gap: 8px; 
           font-weight: 800; 
-          color: #facc15; 
+          color: #f3e73f; 
           font-size: 0.75rem; 
           text-transform: uppercase; 
           margin-bottom: 10px; 
@@ -162,8 +177,8 @@ const NewsManager = () => {
           width: 100%; 
           padding: 14px 16px; 
           border-radius: 12px; 
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(4, 6, 13, 0.6); 
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(6, 13, 61, 0.7); 
           color: #ffffff;
           font-family: inherit; 
           font-size: 0.95rem; 
@@ -173,33 +188,33 @@ const NewsManager = () => {
         }
 
         .custom-input:focus { 
-          border-color: #facc15; 
-          background: rgba(4, 6, 13, 0.85); 
-          box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
+          border-color: #f3e73f; 
+          background: rgba(6, 13, 61, 0.95); 
+          box-shadow: 0 0 15px rgba(243, 231, 63, 0.2);
         }
 
         .upload-trigger {
-          border: 2px dashed rgba(255, 255, 255, 0.15); 
+          border: 2px dashed rgba(243, 231, 63, 0.3); 
           border-radius: 16px; 
           padding: 24px;
           text-align: center; 
           cursor: pointer; 
           transition: all 0.3s ease; 
-          background: rgba(4, 6, 13, 0.4);
+          background: rgba(6, 13, 61, 0.5);
         }
 
         .upload-trigger:hover { 
-          border-color: #facc15; 
-          background: rgba(250, 204, 21, 0.03); 
+          border-color: #f3e73f; 
+          background: rgba(243, 231, 63, 0.08); 
         }
 
         .news-feed { display: flex; flex-direction: column; gap: 20px; width: 100%; }
 
         .article-card { 
-          background: rgba(15, 23, 42, 0.65); 
+          background: linear-gradient(135deg, rgba(12, 28, 140, 0.3) 0%, rgba(6, 13, 61, 0.75) 100%); 
           backdrop-filter: blur(16px);
           border-radius: 20px; 
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           padding: 20px; 
           transition: all 0.3s ease; 
           display: flex; 
@@ -209,12 +224,11 @@ const NewsManager = () => {
         }
 
         .article-card:hover { 
-          border-color: rgba(250, 204, 21, 0.4); 
+          border-color: rgba(243, 231, 63, 0.4); 
           transform: translateY(-2px);
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        /* Fixed structural layout for desktop & mobile */
         .article-main { 
           display: flex; 
           flex-direction: row; 
@@ -229,7 +243,7 @@ const NewsManager = () => {
           align-items: center;
           gap: 16px;
           flex: 1;
-          min-width: 0; /* Prevents flex children from overflowing */
+          min-width: 0;
         }
         
         .article-thumb { 
@@ -239,7 +253,7 @@ const NewsManager = () => {
           border-radius: 14px; 
           object-fit: cover; 
           background: rgba(255, 255, 255, 0.05); 
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .article-text {
@@ -273,7 +287,6 @@ const NewsManager = () => {
           gap: 8px; 
           flex-shrink: 0;
         }
-
         .icon-btn { 
           width: 40px; 
           height: 40px; 
@@ -285,31 +298,30 @@ const NewsManager = () => {
           cursor: pointer; 
           transition: all 0.2s ease;
         }
-
         .btn-view { 
-          background: rgba(250, 204, 21, 0.1); 
-          color: #facc15; 
-          border-color: rgba(250, 204, 21, 0.2);
+          background: rgba(243, 231, 63, 0.12); 
+          color: #f3e73f; 
+          border-color: rgba(243, 231, 63, 0.3);
         }
-        .btn-view:hover { background: rgba(250, 204, 21, 0.2); }
+        .btn-view:hover { background: rgba(243, 231, 63, 0.25); }
 
         .btn-edit { 
-          background: rgba(255, 255, 255, 0.05); 
+          background: rgba(255, 255, 255, 0.08); 
           color: #e2e8f0; 
-          border-color: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.15);
         }
-        .btn-edit:hover { background: rgba(255, 255, 255, 0.15); }
+        .btn-edit:hover { background: rgba(255, 255, 255, 0.2); }
 
         .btn-del { 
-          background: rgba(248, 113, 113, 0.1); 
+          background: rgba(248, 113, 113, 0.15); 
           color: #f87171; 
-          border-color: rgba(248, 113, 113, 0.2);
+          border-color: rgba(248, 113, 113, 0.3);
         }
-        .btn-del:hover { background: rgba(248, 113, 113, 0.2); }
+        .btn-del:hover { background: rgba(248, 113, 113, 0.25); }
 
         .publish-btn {
-          background: #facc15; 
-          color: #04060d; 
+          background: #f3e73f; 
+          color: #060d3d; 
           padding: 16px; 
           border-radius: 12px;
           border: none; 
@@ -322,14 +334,14 @@ const NewsManager = () => {
           align-items: center; 
           justify-content: center; 
           gap: 10px;
-          box-shadow: 0 4px 20px rgba(250, 204, 21, 0.2);
+          box-shadow: 0 4px 20px rgba(243, 231, 63, 0.3);
           transition: all 0.3s ease;
         }
 
         .publish-btn:hover:not(:disabled) {
-          background: #ffe066;
+          background: #fff066;
           transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(250, 204, 21, 0.3);
+          box-shadow: 0 8px 25px rgba(243, 231, 63, 0.45);
         }
 
         @keyframes fadeIn { 
@@ -337,7 +349,6 @@ const NewsManager = () => {
           to { opacity: 1; transform: translateY(0); } 
         }
 
-        /* Mobile specific adjustments */
         @media (max-width: 640px) {
           .article-main { 
             flex-direction: column; 
@@ -355,7 +366,7 @@ const NewsManager = () => {
             width: 100%; 
             justify-content: flex-end; 
             margin-top: 10px; 
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
             padding-top: 10px;
           }
         }
@@ -375,9 +386,9 @@ const NewsManager = () => {
         <button 
           onClick={() => isAdding ? resetForm() : setIsAdding(true)}
           style={{ 
-            background: isAdding ? 'rgba(248, 113, 113, 0.15)' : '#facc15', 
-            color: isAdding ? '#f87171' : '#04060d',
-            border: isAdding ? '1px solid rgba(248, 113, 113, 0.3)' : 'none', 
+            background: isAdding ? 'rgba(248, 113, 113, 0.2)' : '#f3e73f', 
+            color: isAdding ? '#f87171' : '#060d3d',
+            border: isAdding ? '1px solid rgba(248, 113, 113, 0.4)' : 'none', 
             padding: '12px 20px', 
             borderRadius: '12px', 
             fontWeight: '800', 
@@ -389,7 +400,7 @@ const NewsManager = () => {
             alignItems: 'center', 
             gap: '8px',
             transition: 'all 0.3s ease',
-            boxShadow: isAdding ? 'none' : '0 4px 15px rgba(250, 204, 21, 0.2)'
+            boxShadow: isAdding ? 'none' : '0 4px 15px rgba(243, 231, 63, 0.25)'
           }}
         >
           {isAdding ? <><X size={18} /> Close Editor</> : <><Plus size={18} /> Create Post</>}
@@ -426,7 +437,7 @@ const NewsManager = () => {
             <div className="input-group">
               <label><ImageIcon size={16}/> Featured Image</label>
               <div className="upload-trigger" onClick={() => document.getElementById('newsImg').click()}>
-                 <ImageIcon size={26} color="#facc15" style={{ marginBottom: '8px' }}/>
+                 <ImageIcon size={26} color="#f3e73f" style={{ marginBottom: '8px' }}/>
                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: '#e2e8f0' }}>
                    {image ? `Selected: ${image.name}` : existingImageUrl ? "Click to replace existing image" : "Upload article thumbnail"}
                  </p>
@@ -446,10 +457,10 @@ const NewsManager = () => {
         {news.length === 0 ? (
           <div style={{ 
             padding: '40px 20px', 
-            background: 'rgba(15, 23, 42, 0.65)', 
+            background: 'linear-gradient(135deg, rgba(12, 28, 140, 0.3) 0%, rgba(6, 13, 61, 0.75) 100%)', 
             backdropFilter: 'blur(16px)',
             borderRadius: '20px', 
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             color: '#94a3b8', 
             fontWeight: 600,
             fontSize: '0.9rem' 
@@ -472,10 +483,10 @@ const NewsManager = () => {
                     </h4>
                     <div className="article-meta">
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Clock size={12} color="#facc15" /> 
-                        {item.createdAt ? item.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Processing...'}
+                        <Clock size={12} color="#f3e73f" /> 
+                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}
                       </span>
-                      <span style={{ color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.5px' }}>● Official</span>
+                      <span style={{ color: '#f3e73f', textTransform: 'uppercase', letterSpacing: '0.5px' }}>● Official</span>
                     </div>
                   </div>
                 </div>
@@ -497,13 +508,13 @@ const NewsManager = () => {
                 <div style={{ 
                   marginTop: '16px', 
                   padding: '20px', 
-                  background: 'rgba(4, 6, 13, 0.6)', 
+                  background: 'rgba(6, 13, 61, 0.75)', 
                   borderRadius: '14px', 
                   textAlign: 'left', 
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   animation: 'fadeIn 0.3s ease'
                 }}>
-                  <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: '#cbd5e1', whiteSpace: 'pre-wrap', margin: 0 }}>
+                  <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: '#e2e8f0', whiteSpace: 'pre-wrap', margin: 0 }}>
                     {item.content}
                   </p>
                   {item.imageUrl && (
@@ -516,7 +527,7 @@ const NewsManager = () => {
                         objectFit: 'cover', 
                         marginTop: '16px', 
                         borderRadius: '10px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)' 
+                        border: '1px solid rgba(255, 255, 255, 0.15)' 
                       }} 
                     />
                   )}
