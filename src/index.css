@@ -1,16 +1,19 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
 
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  background-color: #1e40af; /* The league blue */
+  min-height: 100vh;
+  background-color: #020e3f; /* Matches your LayoutWrapper background */
   color: white;
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
+  overscroll-behavior-y: none; /* Prevents mobile rubber-band bounce */
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
+  background-color: #020617;
 }

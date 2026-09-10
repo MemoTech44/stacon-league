@@ -16,7 +16,7 @@ import fallImg from '../assets/fall.jpg';
 import galImg from '../assets/gal.jpg';
 import hamImg from '../assets/ham.jpg';
 import kitImg from '../assets/kit.jpg';
-import logoImg from '../assets/logo.jpg';
+import logoImg from '../assets/logo.png';
 import netImg from '../assets/net.jpeg';
 import netwImg from '../assets/netw.jpg';
 import topImg from '../assets/top.jpg';
