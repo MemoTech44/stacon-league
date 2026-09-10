@@ -5,15 +5,15 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration using Vite environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDEPt8LTIT3txQ1sUIDKbPx_-CNcoG0OSo",
-  authDomain: "stacon-league.firebaseapp.com",
-  projectId: "stacon-league",
-  storageBucket: "stacon-league.firebasestorage.app",
-  messagingSenderId: "908546994360",
-  appId: "1:908546994360:web:17921c4ab49ba9f60ec44d",
-  measurementId: "G-8F4G70C9D3"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
