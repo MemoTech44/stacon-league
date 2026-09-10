@@ -4,7 +4,7 @@ import { db, storage } from '../firebase';
 import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Helmet } from 'react-helmet-async';
-import { Loader2, ShieldCheck, Camera, CheckCircle2, ChevronDown} from 'lucide-react';
+import { Loader2, ShieldCheck, Camera, CheckCircle2, ChevronDown } from 'lucide-react';
 
 // Custom Animated Dropdown Component
 const CustomSelect = ({ label, value, options, onChange, placeholder }) => {
@@ -130,7 +130,6 @@ const PlayerRegistration = () => {
 
       setSuccess(true);
       
-      // Automatically redirect to home after 2.5 seconds
       setTimeout(() => {
         navigate('/');
       }, 2500);
@@ -142,10 +141,24 @@ const PlayerRegistration = () => {
     }
   };
 
+  const positionOptions = [
+    { value: 'Goalkeeper', label: 'Goalkeeper' },
+    { value: 'Defender', label: 'Defender' },
+    { value: 'Midfielder', label: 'Midfielder' },
+    { value: 'Forward', label: 'Forward' }
+  ];
+
+  const sexOptions = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' }
+  ];
+
+  const teamOptions = teams.map(t => ({ value: t.name, label: t.name }));
+
   return (
     <>
       <Helmet>
-        <title>Player Registration | St. Jerome League</title>
+        <title>Player Registration | STACON League</title>
       </Helmet>
 
       <div className="reg-page">
@@ -155,7 +168,7 @@ const PlayerRegistration = () => {
           .reg-page {
             background-color: #f8fafc;
             min-height: 100vh;
-            padding: 120px 5% 100px;
+            padding: 140px 5% 100px;
             font-family: 'Plus Jakarta Sans', sans-serif;
             color: #0f172a;
             box-sizing: border-box;
@@ -167,8 +180,7 @@ const PlayerRegistration = () => {
           }
 
           .color-blue { color: #0c1c8c; }
-          .color-yellow { color: #c59b27; }
-          .color-red { color: #b91c1c; }
+          .color-yellow { color: #d97706; }
 
           /* Header Section */
           .section-header { 
@@ -178,7 +190,7 @@ const PlayerRegistration = () => {
 
           .header-tag {
             font-family: 'Cinzel', serif;
-            color: #0c1c8c;
+            color: #d97706;
             font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 3px;
@@ -191,11 +203,11 @@ const PlayerRegistration = () => {
 
           .section-header h1 { 
             font-family: 'Bebas Neue', cursive;
-            font-size: clamp(2.8rem, 6vw, 4.8rem); 
+            font-size: clamp(3.5rem, 8vw, 5rem); 
             color: #0c1c8c; 
             letter-spacing: 1px; 
             margin: 0; 
-            line-height: 1;
+            line-height: 0.9;
             font-weight: 400;
             text-transform: uppercase;
           }
@@ -203,14 +215,14 @@ const PlayerRegistration = () => {
           .header-underline { 
             width: 80px; 
             height: 4px; 
-            background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c); 
+            background: linear-gradient(90deg, #0c1c8c, #d97706); 
             margin: 20px auto 15px; 
             border-radius: 4px; 
           }
 
           .header-subtitle {
             font-family: 'Cinzel', serif;
-            color: #c59b27;
+            color: #d97706;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -224,31 +236,15 @@ const PlayerRegistration = () => {
             padding: 40px;
             border-radius: 24px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
+            box-shadow: 0 15px 35px rgba(12, 28, 140, 0.06);
             position: relative;
             overflow: hidden;
             transition: all 0.35s ease;
           }
 
-          .form-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: transparent;
-            transition: background 0.3s ease;
-            z-index: 2;
-          }
-
           .form-card:hover {
-            border-color: #0c1c8c;
-            box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
-          }
-
-          .form-card:hover::before {
-            background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
+            border-color: #cbd5e1;
+            box-shadow: 0 20px 45px rgba(12, 28, 140, 0.1);
           }
 
           .input-group {
@@ -396,20 +392,22 @@ const PlayerRegistration = () => {
             background: #0c1c8c;
             color: #ffffff;
             padding: 16px;
-            border: none;
-            border-radius: 16px;
+            border: 2px solid #0c1c8c;
+            border-radius: 50px;
             font-family: 'Cinzel', serif;
             font-weight: 700;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: background 0.25s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(12, 28, 140, 0.15);
+            letter-spacing: 1.5px;
+            box-shadow: 0 10px 25px rgba(12, 28, 140, 0.2);
           }
 
           .btn-submit:hover:not(:disabled) {
-            background: #09146c;
+            background: #060d3d;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(12, 28, 140, 0.3);
           }
 
           .btn-submit:disabled {
@@ -450,160 +448,134 @@ const PlayerRegistration = () => {
           }
 
           @media (max-width: 768px) {
-            .reg-page { padding-top: 100px; }
+            .reg-page { padding-top: 110px; padding-bottom: 60px; }
+            .form-card { padding: 24px 20px; }
             .grid-2 { grid-template-columns: 1fr; gap: 0; }
-            .form-card { padding: 30px 20px; }
           }
         `}</style>
 
         <div className="container">
+          <div className="section-header">
+            <div className="header-tag">
+              <ShieldCheck size={16} /> Official Season Registration
+            </div>
+            <h1>Player <span className="color-yellow">Registration</span></h1>
+            <div className="header-underline"></div>
+            <p className="header-subtitle">Stacon League</p>
+          </div>
+
           {success ? (
             <div className="success-card">
-              <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                <CheckCircle2 size={40} color="#10b981" />
-              </div>
-              <h2>REGISTRATION SUCCESSFUL!</h2>
-              <p style={{ color: '#334155', fontWeight: 500, fontSize: '0.95rem', marginBottom: '15px', lineHeight: 1.6 }}>
-                Your player profile has been submitted successfully. Redirecting you home...
+              <CheckCircle2 size={64} color="#0c1c8c" style={{ margin: '0 auto' }} />
+              <h2>Registration Successful!</h2>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: 500 }}>
+                Your player details have been submitted for review. Redirecting to home...
               </p>
             </div>
           ) : (
-            <>
-              <header className="section-header">
-                <span className="header-tag">
-                Official Enrollment
-                </span>
-                <h1>PLAYER <span className="color-yellow">REGISTRATION</span></h1>
-                <div className="header-underline"></div>
-                <p className="header-subtitle">Stacon League • Season 2026/2027</p>
-              </header>
-
-              <form onSubmit={handleSubmit} className="form-card">
-                {/* Name in Full */}
+            <div className="form-card">
+              <form onSubmit={handleSubmit}>
                 <div className="input-group">
-                  <label>Name in Full *</label>
+                  <label>Full Name</label>
                   <input 
+                    type="text"
                     className="r-input"
-                    type="text" 
-                    placeholder="e.g. Musoni Alex" 
-                    required 
+                    placeholder="e.g. John Doe"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
 
-                {/* Team and Team Number */}
                 <div className="grid-2">
                   <CustomSelect 
-                    label="Team *"
+                    label="Select Team"
                     value={formData.team}
-                    options={teams.map(t => ({ value: t.name, label: t.name }))}
-                    onChange={val => setFormData({...formData, team: val})}
-                    placeholder="Select Team"
+                    options={teamOptions}
+                    onChange={(val) => setFormData({...formData, team: val})}
+                    placeholder="Choose Team..."
                   />
 
                   <div className="input-group">
-                    <label>Team Number *</label>
+                    <label>Team Number / Jersey No.</label>
                     <input 
+                      type="text"
                       className="r-input"
-                      type="text" 
-                      placeholder="e.g. 001" 
-                      required 
+                      placeholder="e.g. 10"
                       value={formData.teamNumber}
-                      onChange={e => setFormData({...formData, teamNumber: e.target.value})} 
+                      onChange={(e) => setFormData({...formData, teamNumber: e.target.value})}
                     />
                   </div>
                 </div>
 
-                {/* Position and Sex */}
                 <div className="grid-2">
                   <CustomSelect 
-                    label="Position *"
+                    label="Playing Position"
                     value={formData.position}
-                    options={[
-                      { value: 'Goalkeeper', label: 'Goalkeeper' },
-                      { value: 'Defender', label: 'Defender' },
-                      { value: 'Midfielder', label: 'Midfielder' },
-                      { value: 'Forward', label: 'Forward' }
-                    ]}
-                    onChange={val => setFormData({...formData, position: val})}
-                    placeholder="Select Position"
+                    options={positionOptions}
+                    onChange={(val) => setFormData({...formData, position: val})}
+                    placeholder="Choose Position..."
                   />
 
                   <CustomSelect 
-                    label="Sex *"
+                    label="Sex"
                     value={formData.sex}
-                    options={[
-                      { value: 'Male', label: 'Male' },
-                      { value: 'Female', label: 'Female' }
-                    ]}
-                    onChange={val => setFormData({...formData, sex: val})}
-                    placeholder="Select Sex"
+                    options={sexOptions}
+                    onChange={(val) => setFormData({...formData, sex: val})}
+                    placeholder="Select Sex..."
                   />
                 </div>
 
-                {/* Period of Study */}
-                <div className="input-group">
-                  <label>Period of Study (years) at Stacon *</label>
-                  <input 
-                    className="r-input"
-                    type="text" 
-                    placeholder="e.g. 2014 - 2019" 
-                    required 
-                    value={formData.studyPeriod}
-                    onChange={e => setFormData({...formData, studyPeriod: e.target.value})} 
-                  />
-                </div>
-
-                {/* Contact */}
-                <div className="input-group">
-                  <label>Contact / WhatsApp Number *</label>
-                  <input 
-                    className="r-input"
-                    type="tel" 
-                    required 
-                    placeholder="e.g. +256 700 000 000" 
-                    value={formData.contact}
-                    onChange={e => setFormData({...formData, contact: e.target.value})} 
-                  />
-                </div>
-
-                {/* Passport Photo Upload */}
-                <div className="input-group" style={{ marginBottom: '28px' }}>
-                  <label>Current Photo (Passport Size) *</label>
-                  <div 
-                    className={`upload-area ${photo ? 'has-file' : ''}`}
-                    onClick={() => document.getElementById('pPhoto').click()} 
-                  >
-                    {photo ? <ShieldCheck color="#0c1c8c" size={22} /> : <Camera size={22} color="#64748b" />}
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: photo ? '#0c1c8c' : '#64748b' }}>
-                      {photo ? photo.name : "Tap to upload current photo"}
-                    </span>
+                <div className="grid-2">
+                  <div className="input-group">
+                    <label>Period of Study</label>
                     <input 
-                      id="pPhoto" 
-                      type="file" 
-                      hidden 
-                      accept="image/*" 
-                      onChange={e => setPhoto(e.target.files[0])} 
+                      type="text"
+                      className="r-input"
+                      placeholder="e.g. Year 2 / 2024-2027"
+                      value={formData.studyPeriod}
+                      onChange={(e) => setFormData({...formData, studyPeriod: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label>Contact / WhatsApp Number</label>
+                    <input 
+                      type="text"
+                      className="r-input"
+                      placeholder="e.g. +256 700 000000"
+                      value={formData.contact}
+                      onChange={(e) => setFormData({...formData, contact: e.target.value})}
                     />
                   </div>
                 </div>
 
-                {/* Submit Button */}
-                <button type="submit" disabled={loading} className="btn-submit">
-                  {loading ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                      <Loader2 className="animate-spin" size={20} />
-                      <span>SUBMITTING REGISTRATION...</span>
-                    </div>
-                  ) : "SUBMIT REGISTRATION"}
-                </button>
-
-                <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                   <ShieldCheck size={14} color="#0c1c8c" /> Official Stacon League Verification
+                <div className="input-group">
+                  <label>Passport Photo</label>
+                  <label className={`upload-area ${photo ? 'has-file' : ''}`}>
+                    <Camera size={22} color={photo ? "#0c1c8c" : "#64748b"} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: photo ? '#0c1c8c' : '#64748b' }}>
+                      {photo ? photo.name : "Click to upload passport photo (.jpg, .png)"}
+                    </span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      style={{ display: 'none' }}
+                      onChange={(e) => setPhoto(e.target.files[0])}
+                    />
+                  </label>
                 </div>
+
+                <button type="submit" className="btn-submit" disabled={loading}>
+                  {loading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <Loader2 className="animate-spin" size={18} /> Submitting...
+                    </span>
+                  ) : (
+                    "Complete Registration"
+                  )}
+                </button>
               </form>
-            </>
+            </div>
           )}
         </div>
       </div>

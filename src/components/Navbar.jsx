@@ -40,7 +40,7 @@ const Navbar = () => {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           border-bottom: 1px solid #e2e8f0; 
-          padding: 14px 5%;
+          padding: 12px 5%;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -52,17 +52,17 @@ const Navbar = () => {
         .brand-container {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
           text-decoration: none;
         }
 
         .nav-logo-img {
-          width: 44px; 
-          height: 44px;
-          border-radius: 12px;
+          width: 40px; 
+          height: 40px;
+          border-radius: 10px;
           object-fit: cover;
           border: 1.5px solid #0c1c8c;
-          box-shadow: 0 0 15px rgba(12, 28, 140, 0.15);
+          box-shadow: 0 0 12px rgba(12, 28, 140, 0.15);
           transition: transform 0.3s ease;
         }
 
@@ -78,7 +78,7 @@ const Navbar = () => {
         .logo-main { 
           font-family: 'Bebas Neue', cursive;
           color: #0c1c8c; 
-          font-size: 1.5rem; 
+          font-size: 1.4rem; 
           letter-spacing: 1px; 
           line-height: 0.95;
           display: flex; 
@@ -96,16 +96,16 @@ const Navbar = () => {
         .logo-sub { 
           font-family: 'Cinzel', serif;
           color: #64748b; 
-          font-size: 0.55rem; 
+          font-size: 0.5rem; 
           font-weight: 700; 
           text-transform: uppercase; 
-          letter-spacing: 2px;
-          margin-top: 3px;
+          letter-spacing: 1.5px;
+          margin-top: 2px;
         }
 
         .nav-links-desktop { 
           display: flex; 
-          gap: 16px; 
+          gap: 14px; 
           align-items: center; 
         }
 
@@ -113,12 +113,12 @@ const Navbar = () => {
           font-family: 'Plus Jakarta Sans', sans-serif;
           color: #334155; 
           text-decoration: none; 
-          font-size: 0.75rem; 
+          font-size: 0.72rem; 
           font-weight: 700; 
           text-transform: uppercase; 
           letter-spacing: 0.5px;
           transition: all 0.25s ease;
-          padding: 6px 4px;
+          padding: 6px 2px;
           position: relative;
         }
 
@@ -140,11 +140,11 @@ const Navbar = () => {
         .nav-register {
           background: #0c1c8c;
           color: #ffffff !important;
-          padding: 10px 18px;
-          border-radius: 12px;
+          padding: 8px 16px;
+          border-radius: 10px;
           font-family: 'Cinzel', serif;
           font-weight: 700;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           border: none;
           letter-spacing: 1px;
           box-shadow: 0 4px 15px rgba(12, 28, 140, 0.15);
@@ -166,8 +166,8 @@ const Navbar = () => {
           display: none;
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 8px;
+          border-radius: 10px;
+          padding: 6px;
           color: #0c1c8c;
           cursor: pointer;
           z-index: 10001;
@@ -182,7 +182,7 @@ const Navbar = () => {
         /* MOBILE RESPONSIVE STYLES */
         @media (max-width: 1024px) {
           .league-logo-text { 
-            display: none !important; /* Hides text on mobile view */
+            display: none !important; 
           }
           
           .nav-links-desktop { 
@@ -196,9 +196,9 @@ const Navbar = () => {
           }
 
           .nav-logo-img {
-            width: 38px;
-            height: 38px;
-            border-width: 1px; /* Reduced weight of frame line on mobile */
+            width: 36px;
+            height: 36px;
+            border-width: 1px;
           }
 
           .mobile-backdrop {
@@ -206,51 +206,50 @@ const Navbar = () => {
             inset: 0;
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(4px);
-            z-index: 9999;
+            z-index: 9998;
           }
 
           .nav-links-mobile {
-            position: absolute;
-            top: 76px;
-            right: 5%;
-            width: 280px;
+            position: fixed;
+            top: 68px;
+            right: 4%;
+            width: calc(100% - 32px);
+            max-width: 340px;
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 20px;
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
-            padding: 16px;
-            gap: 6px;
-            box-shadow: 0 20px 40px rgba(12, 28, 140, 0.12);
-            z-index: 10000;
-            animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
+            padding: 12px;
+            gap: 4px;
+            box-shadow: 0 20px 40px rgba(12, 28, 140, 0.15);
+            z-index: 9999;
+            animation: slideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             overflow: hidden;
           }
 
-          /* Animated top gradient accent matching home cards */
           .nav-links-mobile::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #0c1c8c, #e0f802, #0c1c8c);
+            height: 3px;
+            background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
           }
 
           @keyframes slideIn {
-            from { transform: translateY(-12px) scale(0.95); opacity: 0; }
+            from { transform: translateY(-8px) scale(0.97); opacity: 0; }
             to { transform: translateY(0) scale(1); opacity: 1; }
           }
 
           .nav-link-mobile {
-            padding: 12px 14px;
-            border-radius: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
             color: #334155;
             text-decoration: none;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             transition: all 0.2s ease;
@@ -262,16 +261,16 @@ const Navbar = () => {
           }
 
           .nav-register-mobile {
-            margin-top: 6px;
+            margin-top: 4px;
             background: #0c1c8c;
             color: #ffffff !important;
             text-align: center;
-            border-radius: 12px;
+            border-radius: 10px;
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 1px;
-            padding: 14px;
+            padding: 12px;
           }
 
           .nav-register-mobile:hover {
@@ -312,7 +311,7 @@ const Navbar = () => {
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle Navigation"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
         
         {/* Mobile Drawer & Overlay */}

@@ -4,7 +4,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Helmet } from 'react-helmet-async';
 import { 
   Mail, Phone, MapPin, Send, 
-  CheckCircle, Loader2, ShieldCheck, MessageSquare, ChevronDown, Sparkles 
+  CheckCircle, Loader2, ShieldCheck, MessageSquare, ChevronDown 
 } from 'lucide-react';
 
 const Contact = () => {
@@ -93,7 +93,7 @@ const Contact = () => {
   return (
     <>
       <Helmet>
-        <title>Contact Us | St. Jerome League</title>
+        <title>Contact Us | Stacon League</title>
       </Helmet>
 
       <div className="contact-page">
@@ -102,7 +102,7 @@ const Contact = () => {
 
           .contact-page { 
             background-color: #f8fafc; 
-            padding: 120px 5% 100px; 
+            padding: 140px 5% 100px; 
             min-height: 100vh; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             color: #0f172a;
@@ -112,15 +112,14 @@ const Contact = () => {
           .container { max-width: 1100px; margin: 0 auto; }
           
           .color-blue { color: #0c1c8c; }
-          .color-yellow { color: #c59b27; }
-          .color-red { color: #b91c1c; }
+          .color-yellow { color: #d97706; }
 
           /* Header Styling */
           .header-box { text-align: center; margin-bottom: 50px; }
           
           .header-tag {
             font-family: 'Cinzel', serif;
-            color: #0c1c8c;
+            color: #d97706;
             font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 3px;
@@ -131,18 +130,19 @@ const Contact = () => {
 
           .header-box h1 { 
             font-family: 'Bebas Neue', cursive;
-            font-size: clamp(2.5rem, 6vw, 4.8rem); 
+            font-size: clamp(2.8rem, 6vw, 4.8rem); 
             color: #0c1c8c; 
             letter-spacing: 1px; 
             margin: 0; 
             line-height: 1;
             font-weight: 400;
+            text-transform: uppercase;
           }
 
           .header-underline { 
             width: 80px; 
             height: 4px; 
-            background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c); 
+            background: linear-gradient(90deg, #0c1c8c, #d97706); 
             margin: 20px auto 25px; 
             border-radius: 4px; 
           }
@@ -150,7 +150,7 @@ const Contact = () => {
           .header-description { 
             max-width: 720px; 
             margin: 0 auto; 
-            color: #334155; 
+            color: #475569; 
             line-height: 1.7; 
             font-size: 1rem; 
             font-weight: 500;
@@ -180,41 +180,24 @@ const Contact = () => {
             gap: 18px;
             box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
             transition: all 0.35s ease;
-            position: relative;
-          }
-
-          .info-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: transparent;
-            transition: background 0.3s ease;
-            z-index: 2;
           }
 
           .info-card:hover { 
             transform: translateY(-4px); 
-            border-color: #0c1c8c; 
-            box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
-          }
-
-          .info-card:hover::before {
-            background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
+            border-color: #cbd5e1; 
+            box-shadow: 0 16px 40px rgba(12, 28, 140, 0.08);
           }
           
           .icon-box { 
             width: 52px; 
             height: 52px; 
-            background: #f1f5f9; 
+            background: #fef3c7; 
             border-radius: 16px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            color: #0c1c8c; 
-            border: 1px solid #e2e8f0;
+            color: #d97706; 
+            border: 1px solid #fde68a;
             flex-shrink: 0;
           }
 
@@ -244,7 +227,7 @@ const Contact = () => {
             align-items: center;
             border: 1px solid #e2e8f0;
             box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
-            border-left: 4px solid #c59b27;
+            border-left: 4px solid #d97706;
           }
 
           .form-card { 
@@ -252,31 +235,13 @@ const Contact = () => {
             padding: 40px; 
             border-radius: 24px; 
             border: 1px solid #e2e8f0; 
-            box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(12, 28, 140, 0.06);
             transition: all 0.35s ease;
           }
 
-          .form-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: transparent;
-            transition: background 0.3s ease;
-            z-index: 2;
-          }
-
           .form-card:hover {
-            border-color: #0c1c8c;
-            box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
-          }
-
-          .form-card:hover::before {
-            background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
+            border-color: #cbd5e1;
+            box-shadow: 0 20px 45px rgba(12, 28, 140, 0.1);
           }
 
           .input-group { margin-bottom: 22px; position: relative; }
@@ -358,8 +323,8 @@ const Contact = () => {
             width: 100%; 
             padding: 16px; 
             background: #0c1c8c; 
-            border: none; 
-            border-radius: 16px; 
+            border: 2px solid #0c1c8c; 
+            border-radius: 50px; 
             color: #ffffff; 
             font-family: 'Cinzel', serif;
             font-weight: 700; 
@@ -369,12 +334,15 @@ const Contact = () => {
             align-items: center; 
             justify-content: center; 
             gap: 10px; 
-            transition: background 0.25s ease; 
-            letter-spacing: 1px;
+            transition: all 0.3s ease; 
+            letter-spacing: 1.5px;
+            box-shadow: 0 10px 25px rgba(12, 28, 140, 0.2);
           }
 
           .c-btn:hover:not(:disabled) { 
-            background: #09146c; 
+            background: #060d3d; 
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(12, 28, 140, 0.3);
           }
 
           .c-btn:disabled {
@@ -398,9 +366,11 @@ const Contact = () => {
           }
 
           @media (max-width: 900px) {
+            .contact-page { padding-top: 110px; }
             .contact-grid { grid-template-columns: 1fr; }
-            .form-card { padding: 30px 20px; }
-            .header-box h1 { font-size: 2.8rem; }
+            .form-card { padding: 30px 20px; border-radius: 20px; }
+            .info-card { border-radius: 20px; padding: 20px; }
+            .notice-card { border-radius: 20px; }
           }
         `}</style>
 
@@ -411,7 +381,7 @@ const Contact = () => {
             <div className="header-underline"></div>
             <p className="header-description">
               Have questions about team registration, match fixtures, or partnership opportunities? 
-              Reach out directly to the Stacon League committee.
+              Reach out directly to the STACON League committee.
             </p>
           </header>
 
@@ -442,8 +412,8 @@ const Contact = () => {
               </div>
 
               <div className="notice-card">
-                <MessageSquare size={22} color="#c59b27" style={{ flexShrink: 0 }} />
-                <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', fontWeight: 500, lineHeight: 1.6 }}>
+                <MessageSquare size={22} color="#d97706" style={{ flexShrink: 0 }} />
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', fontWeight: 500, lineHeight: 1.6 }}>
                   Typical response time: <span style={{ color: '#0c1c8c', fontWeight: 700 }}>Within 24 hours.</span>
                 </p>
               </div>
@@ -454,13 +424,13 @@ const Contact = () => {
                 <div className="success-box">
                   <CheckCircle size={56} color="#10b981" style={{ margin: '0 auto 15px' }} />
                   <h2>Message Sent!</h2>
-                  <p style={{ color: '#334155', fontWeight: 500, fontSize: '0.95rem' }}>
+                  <p style={{ color: '#475569', fontWeight: 500, fontSize: '0.95rem' }}>
                     We've received your inquiry and will respond shortly.
                   </p>
                   <button 
                     onClick={() => setSubmitted(false)} 
                     className="c-btn" 
-                    style={{ marginTop: '25px', background: '#f1f5f9', color: '#0c1c8c', border: '1px solid #e2e8f0' }}
+                    style={{ marginTop: '25px', background: '#f1f5f9', color: '#0c1c8c', border: '1px solid #e2e8f0', boxShadow: 'none' }}
                   >
                     Send Another Message
                   </button>
@@ -560,7 +530,7 @@ const Contact = () => {
                   </button>
                   
                   <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                     <ShieldCheck size={14} color="#0c1c8c" /> Official Stacon League Communication
+                     <ShieldCheck size={14} color="#0c1c8c" /> Official STACON League Communication
                   </div>
                 </form>
               )}

@@ -81,7 +81,7 @@ const About = () => {
         .container { max-width: 1100px; margin: 0 auto; }
         
         .color-blue { color: #0c1c8c; }
-        .color-yellow { color: #e0f802; }
+        .color-yellow { color: #c59b27; }
         .color-red { color: #b91c1c; }
 
         /* Header Styling */
@@ -111,7 +111,7 @@ const About = () => {
         .header-underline { 
           width: 80px; 
           height: 4px; 
-          background: linear-gradient(90deg, #0c1c8c, #e0f802, #b91c1c); 
+          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c); 
           margin: 20px auto 25px; 
           border-radius: 4px; 
         }
@@ -163,8 +163,25 @@ const About = () => {
           position: relative;
         }
 
+        .featured-hero::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: transparent;
+          transition: background 0.3s ease;
+          z-index: 2;
+        }
+
         .featured-hero:hover { 
+          border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.12);
+        }
+
+        .featured-hero:hover::before {
+          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .featured-content {
@@ -175,9 +192,9 @@ const About = () => {
         }
 
         .trending-badge { 
-          background: #fefce8; 
-          color: #713f12; 
-          border: 1px solid #fef08a;
+          background: #fef9c3; 
+          color: #854d0e; 
+          border: 1px solid #fde047;
           padding: 6px 14px; 
           border-radius: 50px; 
           font-size: 0.75rem; 
@@ -220,9 +237,26 @@ const About = () => {
           position: relative;
         }
 
+        .news-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: transparent;
+          transition: background 0.3s ease;
+          z-index: 2;
+        }
+
         .news-card:hover { 
           transform: translateY(-8px); 
+          border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1); 
+        }
+
+        .news-card:hover::before {
+          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .card-body { 
@@ -233,7 +267,7 @@ const About = () => {
         }
 
         .card-category {
-          color: #0c1c8c; 
+          color: #c59b27; 
           font-weight: 800; 
           font-size: 0.7rem; 
           text-transform: uppercase; 
@@ -280,6 +314,7 @@ const About = () => {
 
         .format-card:hover {
           transform: translateY(-5px);
+          border-color: #0c1c8c;
           box-shadow: 0 12px 25px rgba(12, 28, 140, 0.06);
         }
 
@@ -322,9 +357,26 @@ const About = () => {
           position: relative;
         }
 
+        .team-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: transparent;
+          transition: background 0.3s ease;
+          z-index: 2;
+        }
+
         .team-card:hover { 
           transform: translateY(-8px); 
+          border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1); 
+        }
+
+        .team-card:hover::before {
+          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .team-logo-container { 
@@ -582,7 +634,7 @@ const About = () => {
                 {selectedTeam.captain && (
                   <div style={{ marginBottom: '20px' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>Club Leadership</span>
-                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.95srem' }}>
+                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.95rem' }}>
                       Captain: <span style={{ fontWeight: 500, color: '#334155' }}>{selectedTeam.captain}</span>
                     </p>
                   </div>

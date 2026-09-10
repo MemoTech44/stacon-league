@@ -121,7 +121,7 @@ const Home = () => {
           display: flex; 
           align-items: center; 
           justify-content: center; 
-          padding: 130px 24px 70px;
+          padding: 140px 24px 80px;
           text-align: center;
           overflow: hidden;
           min-height: 520px;
@@ -137,13 +137,13 @@ const Home = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 0.35;
+          opacity: 0.25;
         }
 
         .hero-overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(6, 13, 61, 0.75) 0%, rgba(248, 250, 252, 0.96) 90%, #f8fafc 100%);
+          background: linear-gradient(135deg, rgba(6, 13, 61, 0.95) 0%, rgba(12, 28, 140, 0.85) 100%);
           z-index: 2;
         }
 
@@ -151,36 +151,37 @@ const Home = () => {
           position: relative;
           z-index: 10;
           width: 100%;
-          max-width: 860px;
+          max-width: 900px;
         }
 
         .welcome-prefix {
           font-family: 'Cinzel', serif;
-          color: #e0f802;
+          color: #d97706;
           font-weight: 700;
           letter-spacing: 5px;
           text-transform: uppercase;
           font-size: clamp(0.85rem, 2vw, 1.15rem);
-          margin: 0 0 8px 0;
+          margin: 0 0 10px 0;
         }
         
         .hero-title {
           font-family: 'Bebas Neue', cursive;
-          font-size: clamp(3rem, 9vw, 5.8rem); 
+          font-size: clamp(3.2rem, 9vw, 6rem); 
           letter-spacing: 2px;
-          margin: 0 0 12px 0; 
+          margin: 0 0 10px 0; 
           line-height: 0.92;
-          color: #f8f8fa;
+          color: #ffffff;
           text-transform: uppercase;
+          text-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .hero-subtitle {
           font-family: 'Cinzel', serif;
-          color: #e0f802;
+          color: #d97706;
           font-weight: 800;
-          letter-spacing: 3px;
+          letter-spacing: 4px;
           text-transform: uppercase;
-          font-size: clamp(0.8rem, 1.6vw, 1.05rem);
+          font-size: clamp(0.85rem, 1.8vw, 1.15rem);
           margin: 0 auto 28px;
         }
 
@@ -189,7 +190,7 @@ const Home = () => {
           color: #0c1c8c;
           letter-spacing: 1.5px;
           text-transform: uppercase;
-          font-size: clamp(1.9rem, 4vw, 2.6rem);
+          font-size: clamp(2rem, 4vw, 2.8rem);
           margin: 0;
           line-height: 1;
         }
@@ -199,73 +200,69 @@ const Home = () => {
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(217, 119, 6, 0.3);
+          padding: 30px;
+          border-radius: 24px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
 
         .hero-description {
-          color: #334155;
-          font-size: clamp(0.92rem, 1.7vw, 1.05rem);
-          line-height: 1.75;
+          color: #f1f5f9;
+          font-size: clamp(0.95rem, 1.7vw, 1.1rem);
+          line-height: 1.8;
           font-weight: 400;
-          margin: 0 0 20px 0;
+          margin: 0;
         }
 
         .sponsor-btn {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          background-color: #0c1c8c;
-          color: #e0f802;
+          gap: 10px;
+          background-color: #d97706;
+          color: #ffffff;
           font-family: 'Cinzel', serif;
           font-weight: 700;
           font-size: 0.95rem;
           letter-spacing: 1.5px;
           text-transform: uppercase;
-          padding: 12px 28px;
+          padding: 14px 32px;
           border-radius: 50px;
           text-decoration: none;
-          box-shadow: 0 10px 25px rgba(12, 28, 140, 0.2);
+          box-shadow: 0 10px 25px rgba(217, 119, 6, 0.3);
           transition: all 0.3s ease;
-          border: 2px solid #e0f802;
+          border: 2px solid #b45309;
         }
 
         .sponsor-btn:hover {
-          background-color: #e0f802;
-          color: #0c1c8c;
+          background-color: #b45309;
+          color: #ffffff;
           transform: translateY(-2px);
-          box-shadow: 0 15px 30px rgba(12, 28, 140, 0.3);
+          box-shadow: 0 15px 30px rgba(217, 119, 6, 0.4);
         }
 
         .glass-card {
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(12, 28, 140, 0.05);
+          border-radius: 24px;
+          box-shadow: 0 15px 35px rgba(12, 28, 140, 0.06);
           position: relative;
           overflow: hidden;
           transition: all 0.3s ease;
         }
 
-        .glass-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: linear-gradient(90deg, #0c1c8c, #e0f802, #0c1c8c);
-        }
-
         .glass-card:hover {
           transform: translateY(-4px);
           border-color: #cbd5e1;
-          box-shadow: 0 20px 45px rgba(12, 28, 140, 0.09);
+          box-shadow: 0 20px 45px rgba(12, 28, 140, 0.1);
         }
 
         .value-pillar {
-          padding: 32px 20px;
+          padding: 36px 24px;
           background: #ffffff;
-          border-radius: 20px;
+          border-radius: 24px;
           border: 1px solid #e2e8f0;
           text-align: center;
           display: flex;
@@ -279,22 +276,34 @@ const Home = () => {
 
         .value-pillar:hover {
           transform: translateY(-5px);
-          border-color: #e0f802;
+          border-color: #d97706;
           box-shadow: 0 18px 40px rgba(12, 28, 140, 0.09);
+        }
+
+        .icon-box-wrapper {
+          width: 64px;
+          height: 64px;
+          border-radius: 18px;
+          background: #fef3c7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 20px;
+          border: 1px solid #fde68a;
         }
 
         .value-title {
           font-family: 'Cinzel', serif;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           font-weight: 700;
           color: #0c1c8c;
-          margin: 14px 0 8px 0;
+          margin: 0 0 12px 0;
         }
 
         .news-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 24px;
         }
 
         .pulse-card { 
@@ -302,9 +311,9 @@ const Home = () => {
           border: 1px solid #e2e8f0; 
           background: #ffffff;
           display: flex;
-          gap: 16px;
-          padding: 16px;
-          border-radius: 20px;
+          gap: 18px;
+          padding: 20px;
+          border-radius: 24px;
           cursor: pointer;
           box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
           position: relative;
@@ -314,13 +323,13 @@ const Home = () => {
         .page-banner-wrapper {
           padding: 0 4%;
           max-width: 1280px;
-          margin: 10px auto 35px;
+          margin: 20px auto 40px;
           box-sizing: border-box;
         }
 
         .page-banner {
           width: 100%;
-          height: 380px;
+          height: 400px;
           border-radius: 24px;
           overflow: hidden;
           position: relative;
@@ -347,11 +356,11 @@ const Home = () => {
         .banner-overlay-content {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to top, rgba(12, 28, 140, 0.75) 0%, rgba(12, 28, 140, 0.1) 60%, transparent 100%);
+          background: linear-gradient(to top, rgba(6, 13, 61, 0.9) 0%, rgba(12, 28, 140, 0.3) 60%, transparent 100%);
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
-          padding: 24px;
+          padding: 30px;
           color: #ffffff;
           z-index: 5;
         }
@@ -360,7 +369,7 @@ const Home = () => {
           display: flex;
           justify-content: center;
           gap: 8px;
-          margin-top: 16px;
+          margin-top: 18px;
         }
 
         .slide-dot {
@@ -374,7 +383,7 @@ const Home = () => {
         }
 
         .slide-dot.active {
-          width: 26px;
+          width: 28px;
           background: #0c1c8c;
         }
         
@@ -388,21 +397,21 @@ const Home = () => {
           width: 100%;
           border-collapse: collapse;
           text-align: left;
-          font-size: 0.85rem;
+          font-size: 0.88rem;
         }
 
         .snippet-table th {
           background: #f1f5f9;
           color: #0c1c8c;
-          padding: 10px;
+          padding: 12px;
           font-weight: 700;
           font-family: 'Cinzel', serif;
-          font-size: 0.72rem;
+          font-size: 0.75rem;
           text-transform: uppercase;
         }
 
         .snippet-table td {
-          padding: 12px 10px;
+          padding: 14px 12px;
           border-bottom: 1px solid #e2e8f0;
           color: #334155;
           font-weight: 500;
@@ -415,15 +424,15 @@ const Home = () => {
         .home-gallery-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 20px;
-          max-width: 900px;
+          gap: 24px;
+          max-width: 1000px;
           margin: 0 auto;
         }
 
         .home-gallery-card {
           position: relative;
-          height: 240px;
-          border-radius: 20px;
+          height: 280px;
+          border-radius: 24px;
           overflow: hidden;
           border: 1px solid #e2e8f0;
           box-shadow: 0 10px 30px rgba(12, 28, 140, 0.06);
@@ -444,29 +453,28 @@ const Home = () => {
         .home-gallery-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to top, rgba(12, 28, 140, 0.88) 0%, rgba(12, 28, 140, 0.15) 65%, transparent 100%);
+          background: linear-gradient(to top, rgba(6, 13, 61, 0.9) 0%, rgba(12, 28, 140, 0.2) 65%, transparent 100%);
           display: flex;
           flex-direction: column;
           justify-content: flex-end;
-          padding: 18px;
+          padding: 24px;
           color: #ffffff;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           .hero-viewport { 
-            padding: 95px 16px 50px; 
+            padding: 110px 16px 60px; 
             min-height: auto;
           }
           
           .page-banner-wrapper {
             padding: 0 16px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
           }
 
           .page-banner {
-            height: 210px;
-            border-radius: 16px;
-            border-width: 2px;
+            height: 240px;
+            border-radius: 20px;
           }
 
           .home-gallery-grid {
@@ -476,54 +484,54 @@ const Home = () => {
           .pulse-card {
             flex-direction: column;
             align-items: flex-start;
-            padding: 14px;
+            padding: 16px;
           }
           .pulse-card img {
             width: 100% !important;
-            height: 160px !important;
-            border-radius: 12px !important;
+            height: 180px !important;
+            border-radius: 16px !important;
           }
           
           .content-section {
-            padding: 20px 16px 50px !important;
+            padding: 20px 16px 60px !important;
           }
 
           .glass-card {
-            border-radius: 16px;
-            padding: 18px !important;
+            border-radius: 20px;
+            padding: 20px !important;
           }
 
           .value-pillar {
-            padding: 24px 16px;
-            border-radius: 16px;
+            padding: 28px 20px;
+            border-radius: 20px;
           }
 
           .home-gallery-card {
-            height: 200px;
-            border-radius: 16px;
+            height: 220px;
+            border-radius: 20px;
           }
         }
       `}</style>
 
-      {/* HERO SECTION WITH LOGO / ASSET BACKGROUND */}
+      {/* HERO SECTION WITH THEME DESIGN */}
       <section className="hero-viewport">
         <div className="hero-bg-static">
-          <img src={logoImg} alt="STACON League Logo Background" />
+          <img src={bachweziImg} alt="STACON League Bachwezi Background" />
         </div>
         <div className="hero-overlay-gradient"></div>
 
         <div className="hero-content-wrapper">
           <p className="welcome-prefix">Welcome To</p>
           <h1 className="hero-title">STACON League</h1>
-          <p className="hero-subtitle">REEKA ENTANGA ETAMBURE</p>
+          <p className="hero-subtitle">REKA ENTANGA ETAMBURE</p>
           
           <div className="hero-description-box">
             <p className="hero-description">
               The STACON League is more than a football championship—it is a celebration of heritage, friendship, achievement, and the enduring bonds forged within the walls of our school. Bringing together alumni from different generations, classes, and eras, the League transforms the beautiful game into a powerful platform for reconnection, healthy rivalry, and lifelong camaraderie.
             </p>
-            <div>
+            <div style={{ textAlign: 'center', marginTop: '6px' }}>
               <Link to="/contact" className="sponsor-btn">
-                <Heart size={18} /> Become a Sponsor
+                Become a Sponsor
               </Link>
             </div>
           </div>
@@ -542,7 +550,7 @@ const Home = () => {
             />
           ))}
           <div className="banner-overlay-content">
-            <h4 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: 'clamp(0.9rem, 2vw, 1.2rem)', fontWeight: 700, color: '#e0f802', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            <h4 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: 'clamp(0.95rem, 2vw, 1.3rem)', fontWeight: 700, color: '#f59e0b', letterSpacing: '1px', textTransform: 'uppercase' }}>
               {bannerSlides[currentSlide].caption}
             </h4>
           </div>
@@ -561,33 +569,39 @@ const Home = () => {
       </div>
 
       {/* CORE PILLARS SECTION */}
-      <section style={{ padding: '20px 4% 50px', maxWidth: '1280px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0c1c8c', letterSpacing: '2px', textTransform: 'uppercase' }}>Our Foundation</span>
-          <h2 className="gold-heading" style={{ marginTop: '4px' }}>Core Pillars</h2>
+      <section style={{ padding: '20px 4% 60px', maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', fontFamily: 'Cinzel, serif', letterSpacing: '3px', textTransform: 'uppercase' }}>Our Foundation</span>
+          <h2 className="gold-heading" style={{ marginTop: '6px' }}>Core Pillars</h2>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
           <div className="value-pillar">
-            <Shield color="#0c1c8c" size={30} />
+            <div className="icon-box-wrapper">
+              <Shield color="#0c1c8c" size={30} />
+            </div>
             <h4 className="value-title">Heritage & Integrity</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', lineHeight: 1.65 }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.7 }}>
               Upholding strict standards of fair play and respecting the rich traditions of Standard College Ntungamo across every season.
             </p>
           </div>
 
           <div className="value-pillar">
-            <Users color="#0c1c8c" size={30} />
+            <div className="icon-box-wrapper">
+              <Users color="#0c1c8c" size={30} />
+            </div>
             <h4 className="value-title">Alumni Unity</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', lineHeight: 1.65 }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.7 }}>
               Acting as a vibrant networking bridge connecting veteran alumni with recent graduates through community initiatives and football camaraderie.
             </p>
           </div>
 
           <div className="value-pillar">
-            <Heart color="#0c1c8c" size={30} />
+            <div className="icon-box-wrapper">
+              <Heart color="#0c1c8c" size={30} />
+            </div>
             <h4 className="value-title">Unmatched Passion</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', lineHeight: 1.65 }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.7 }}>
               Delivering an intense, high-energy league structure where every match day brings out the absolute best in our players and supporters.
             </p>
           </div>
@@ -595,35 +609,37 @@ const Home = () => {
       </section>
 
       {/* LEAGUE SNIPPETS SECTION: TABLE, FIXTURES, & RESULTS */}
-      <section style={{ padding: '10px 4% 50px', maxWidth: '1280px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+      <section style={{ padding: '10px 4% 60px', maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
           
           {/* STANDINGS */}
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Trophy size={18} color="#0c1c8c" />
-                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.05rem', color: '#0c1c8c' }}>League Standings</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trophy size={18} color="#d97706" />
+                  </div>
+                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>League Standings</h3>
                 </div>
-                <Link to="/table" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Link to="/table" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Full Table <ArrowRight size={13} />
                 </Link>
               </div>
 
               {loading ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>Loading table...</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>Loading table...</p>
               ) : standings.length === 0 ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>No standings available yet.</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>No standings available yet.</p>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
                   <table className="snippet-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '35px' }}>Pos</th>
+                        <th style={{ width: '40px' }}>Pos</th>
                         <th>Team</th>
-                        <th style={{ textAlign: 'center', width: '45px' }}>PL</th>
-                        <th style={{ textAlign: 'center', width: '45px' }}>PTS</th>
+                        <th style={{ textAlign: 'center', width: '50px' }}>PL</th>
+                        <th style={{ textAlign: 'center', width: '50px' }}>PTS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -643,33 +659,35 @@ const Home = () => {
           </div>
 
           {/* FIXTURES */}
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Calendar size={18} color="#0c1c8c" />
-                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.05rem', color: '#0c1c8c' }}>Upcoming Fixtures</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Calendar size={18} color="#d97706" />
+                  </div>
+                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>Upcoming Fixtures</h3>
                 </div>
-                <Link to="/fixtures" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Link to="/fixtures" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   All Fixtures <ArrowRight size={13} />
                 </Link>
               </div>
 
               {loading ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>Loading fixtures...</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>Loading fixtures...</p>
               ) : fixtures.length === 0 ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>No upcoming fixtures scheduled.</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>No upcoming fixtures scheduled.</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {fixtures.map((fix, index) => (
-                    <div key={fix.id || index} style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
+                    <div key={fix.id || index} style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
                         <span>{fix.date || 'TBD'}</span>
                         <span>{fix.time || ''}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fix.homeTeam || fix.home || 'Home Team'}</span>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', padding: '2px 6px', background: '#e2e8f0', borderRadius: '5px', margin: '0 6px' }}>VS</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', padding: '2px 8px', background: '#e2e8f0', borderRadius: '6px', margin: '0 8px' }}>VS</span>
                         <span style={{ flex: 1, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fix.awayTeam || fix.away || 'Away Team'}</span>
                       </div>
                     </div>
@@ -680,32 +698,34 @@ const Home = () => {
           </div>
 
           {/* RESULTS */}
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Activity size={18} color="#0c1c8c" />
-                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.05rem', color: '#0c1c8c' }}>Latest Results</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Activity size={18} color="#d97706" />
+                  </div>
+                  <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>Latest Results</h3>
                 </div>
-                <Link to="/results" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Link to="/results" style={{ color: '#0c1c8c', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   All Results <ArrowRight size={13} />
                 </Link>
               </div>
 
               {loading ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>Loading results...</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>Loading results...</p>
               ) : results.length === 0 ? (
-                <p style={{ color: '#475569', fontSize: '0.88rem', textAlign: 'center', padding: '20px' }}>No recent match results recorded.</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>No recent match results recorded.</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {results.map((res, index) => (
-                    <div key={res.id || index} style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textAlign: 'center' }}>
+                    <div key={res.id || index} style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, textAlign: 'center' }}>
                         {res.date || 'Recent Match'}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
                         <span style={{ flex: 1, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.homeTeam || res.home || 'Home'}</span>
-                        <span style={{ margin: '0 8px', padding: '3px 8px', background: '#0c1c8c', color: '#ffffff', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 800, minWidth: '40px', textAlign: 'center' }}>
+                        <span style={{ margin: '0 10px', padding: '4px 10px', background: '#0c1c8c', color: '#ffffff', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 800, minWidth: '45px', textAlign: 'center', boxShadow: '0 4px 12px rgba(12,28,140,0.2)' }}>
                           {res.homeScore ?? res.homeGoals ?? '0'} - {res.awayScore ?? res.awayGoals ?? '0'}
                         </span>
                         <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.awayTeam || res.away || 'Away'}</span>
@@ -721,13 +741,13 @@ const Home = () => {
       </section>
 
       {/* EXACTLY TWO GALLERY HIGHLIGHTS FOR THE HOMEPAGE */}
-      <section style={{ padding: '10px 4% 50px', maxWidth: '1280px', margin: '0 auto' }}>
+      <section style={{ padding: '10px 4% 60px', maxWidth: '1280px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0c1c8c', letterSpacing: '2px', textTransform: 'uppercase' }}>Visual Memories</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', fontFamily: 'Cinzel, serif', letterSpacing: '3px', textTransform: 'uppercase' }}>Visual Memories</span>
             <h2 className="gold-heading" style={{ marginTop: '4px' }}>League Moments</h2>
           </div>
-          <Link to="/GalleryView" style={{ color: '#0c1c8c', fontWeight: 800, textDecoration: 'none', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Link to="/GalleryView" style={{ color: '#0c1c8c', fontWeight: 800, textDecoration: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
             Full Gallery <ArrowRight size={15} />
           </Link>
         </div>
@@ -737,11 +757,11 @@ const Home = () => {
             <div key={item.id} className="home-gallery-card" onClick={() => navigate('/GalleryView')}>
               <img src={item.url} alt={item.caption} />
               <div className="home-gallery-overlay">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <ImageIcon size={15} color="#e0f802" />
-                  <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.68rem', fontWeight: 700, color: '#e0f802', letterSpacing: '1px', textTransform: 'uppercase' }}>STACON Gallery</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <ImageIcon size={15} color="#d97706" />
+                  <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.72rem', fontWeight: 700, color: '#d97706', letterSpacing: '1px', textTransform: 'uppercase' }}>STACON Gallery</span>
                 </div>
-                <h4 style={{ margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.3 }}>{item.caption}</h4>
+                <h4 style={{ margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '1rem', fontWeight: 700, lineHeight: 1.3 }}>{item.caption}</h4>
               </div>
             </div>
           ))}
@@ -749,34 +769,34 @@ const Home = () => {
       </section>
 
       {/* LATEST NEWS SECTION */}
-      <section className="content-section" style={{ padding: '10px 4% 70px', maxWidth: '1280px', margin: '0 auto' }}>
+      <section className="content-section" style={{ padding: '10px 4% 80px', maxWidth: '1280px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px' }}>
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0c1c8c', letterSpacing: '2px', textTransform: 'uppercase' }}>Stay Updated</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', fontFamily: 'Cinzel, serif', letterSpacing: '3px', textTransform: 'uppercase' }}>Stay Updated</span>
             <h2 className="gold-heading" style={{ marginTop: '4px' }}>Latest News</h2>
           </div>
-          <Link to="/news" style={{ color: '#0c1c8c', fontWeight: 800, textDecoration: 'none', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Link to="/news" style={{ color: '#0c1c8c', fontWeight: 800, textDecoration: 'none', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
             View All News <ArrowRight size={15} />
           </Link>
         </div>
         
         {loading ? (
-          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: '#475569', fontSize: '0.92rem' }}>
+          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: '#475569', fontSize: '0.95rem' }}>
             Loading latest news...
           </div>
         ) : news.length === 0 ? (
-          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: '#475569', fontSize: '0.92rem' }}>
+          <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: '#475569', fontSize: '0.95rem' }}>
             No news articles published yet.
           </div>
         ) : (
           <div className="news-grid">
             {news.map((item, index) => (
               <div key={item.id} onClick={() => navigate('/news')} className="pulse-card">
-                <img src={item.image || item.imageUrl || sideAssets[index % sideAssets.length]} style={{ width: '90px', height: '90px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0, border: '1px solid #e2e8f0' }} alt={item.title || "News Image"} />
+                <img src={item.image || item.imageUrl || sideAssets[index % sideAssets.length]} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, border: '1px solid #e2e8f0' }} alt={item.title || "News Image"} />
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.displayDate}</span>
-                  <h4 style={{ margin: '5px 0', fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.3, textTransform: 'capitalize' }}>{item.title}</h4>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#475569', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.displayDate}</span>
+                  <h4 style={{ margin: '6px 0', fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.35, textTransform: 'capitalize' }}>{item.title}</h4>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>
                     {item.excerpt || (item.content ? item.content.substring(0, 65) + '...' : '')}
                   </p>
                 </div>
