@@ -11,17 +11,29 @@ const Footer = () => {
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
         .league-footer {
-          background-color: #ffffff; 
-          border-top: 1px solid #e2e8f0;
+          background-color: #0c1c8c; 
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
           padding: 60px 24px 30px;
           font-family: 'Plus Jakarta Sans', sans-serif;
-          color: #0f172a;
+          color: #ffffff;
           width: 100%;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           align-items: center;
-          box-shadow: 0 -10px 30px rgba(12, 28, 140, 0.03);
+          box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .league-footer::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
         }
 
         .footer-container {
@@ -53,17 +65,17 @@ const Footer = () => {
           gap: 6px;
           flex-wrap: wrap;
           line-height: 1;
-          color: #0c1c8c;
+          color: #ffffff;
           text-transform: uppercase;
         }
 
         .footer-accent { 
-          color: #b8970b; 
+          color: #d97706; 
         }
 
         .footer-motto {
           font-family: 'Cinzel', serif;
-          color: #0c1c8c;
+          color: #cbd5e1;
           font-size: 0.8rem;
           font-weight: 700;
           text-transform: uppercase;
@@ -71,7 +83,7 @@ const Footer = () => {
         }
 
         .footer-desc {
-          color: #475569;
+          color: #94a3b8;
           font-size: 0.9rem;
           line-height: 1.7;
           max-width: 400px;
@@ -89,7 +101,7 @@ const Footer = () => {
           font-weight: 700;
           letter-spacing: 1.5px;
           margin: 0 0 20px 0;
-          color: #0c1c8c;
+          color: #ffffff;
           text-transform: uppercase;
         }
 
@@ -103,7 +115,7 @@ const Footer = () => {
         }
 
         .footer-link {
-          color: #475569;
+          color: #94a3b8;
           text-decoration: none;
           font-size: 0.88rem;
           font-weight: 500;
@@ -114,13 +126,13 @@ const Footer = () => {
         }
 
         .footer-link:hover {
-          color: #0c1c8c;
+          color: #ffffff;
           transform: translateX(4px);
         }
 
         .footer-bottom {
           width: 100%;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
           padding-top: 24px;
           display: flex;
           justify-content: space-between;
@@ -131,7 +143,7 @@ const Footer = () => {
         .copyright {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #64748b;
+          color: #94a3b8;
           text-transform: uppercase;
           letter-spacing: 1px;
         }
@@ -186,7 +198,7 @@ const Footer = () => {
                   <Icons.MapPin size={16} className="footer-accent" /> Kampala, Uganda
                 </li>
                 <li className="footer-link">
-                  <Icons.Mail size={16} className="footer-accent" /> info@stagonleague.com
+                  <Icons.Mail size={16} className="footer-accent" /> info@staconleague.com
                 </li>
               </ul>
             </div>
@@ -196,7 +208,7 @@ const Footer = () => {
             <div className="copyright">
               © {currentYear} STACON League. All rights reserved.
             </div>
-            <div className="copyright" style={{ color: '#b8970b' }}>
+            <div className="copyright" style={{ color: '#d97706' }}>
               Est. 2026
             </div>
           </div>
