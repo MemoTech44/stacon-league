@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
-  Clock, 
+  collection, 
+  query, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  arrayUnion, 
+  increment 
+} from 'firebase/firestore';
+import { 
   Loader2, 
   AlertCircle,
   Calendar,
   ChevronRight,
   X,
-  Zap
+  Zap,
+  Heart,
+  MessageCircle,
+  Share2,
+  Send,
+  ChevronDown,
+  Clock
 } from 'lucide-react';
 
 const News = () => {
@@ -16,12 +31,19 @@ const News = () => {
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState(null);
 
+  // New states for interactive modal features
+  const [commentInput, setCommentInput] = useState('');
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+
   // Body scroll lock logic
   useEffect(() => {
     if (selectedArticle) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
+      setShowAllComments(false); // Reset comment view toggle on close
+      setCommentInput('');
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedArticle]);
@@ -32,15 +54,22 @@ const News = () => {
       try {
         const newsQuery = query(collection(db, "news"), orderBy("createdAt", "desc"), limit(10));
         const querySnapshot = await getDocs(newsQuery);
-        const newsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().createdAt?.toDate().toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-          }) || "Recently Posted"
-        }));
+        const newsData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Check multiple potential field names for images stored in Firestore
+            imageUrl: data.imageUrl || data.image || data.photo || data.imgUrl || data.coverImage || "",
+            likes: data.likes || 0,
+            comments: data.comments || [],
+            date: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            }) : (data.createdAt || "Recently Posted")
+          };
+        });
         setArticles(newsData);
       } catch (error) {
         console.error("Error fetching news:", error);
@@ -57,11 +86,92 @@ const News = () => {
     }
   };
 
-  const getImageUrl = (url) => {
-    if (!url || url.includes('via.placeholder')) {
-      return `https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=600&q=75`;
+  const getImageUrl = (url, identifier = '') => {
+    if (!url || typeof url !== 'string' || url.trim() === '' || url.includes('via.placeholder')) {
+      const fallbacks = [
+        'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=75',
+        'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?auto=format&fit=crop&w=800&q=75'
+      ];
+      const index = identifier ? [...identifier].reduce((acc, char) => acc + char.charCodeAt(0), 0) % fallbacks.length : 0;
+      return fallbacks[index];
     }
     return url;
+  };
+
+  // Handler for liking an article
+  const handleLike = async () => {
+    if (!selectedArticle || isLiking) return;
+    setIsLiking(true);
+    const articleRef = doc(db, "news", selectedArticle.id);
+
+    try {
+      await updateDoc(articleRef, {
+        likes: increment(1)
+      });
+
+      // Update local state smoothly
+      const updatedArticle = { ...selectedArticle, likes: (selectedArticle.likes || 0) + 1 };
+      setSelectedArticle(updatedArticle);
+      setArticles(articles.map(art => art.id === updatedArticle.id ? updatedArticle : art));
+    } catch (error) {
+      console.error("Error liking article:", error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  // Handler for submitting a comment
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!commentInput.trim() || !selectedArticle) return;
+
+    const newComment = {
+      id: Date.now().toString(),
+      text: commentInput.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    const articleRef = doc(db, "news", selectedArticle.id);
+
+    try {
+      await updateDoc(articleRef, {
+        comments: arrayUnion(newComment)
+      });
+
+      const updatedComments = [...(selectedArticle.comments || []), newComment];
+      const updatedArticle = { ...selectedArticle, comments: updatedComments };
+      
+      setSelectedArticle(updatedArticle);
+      setArticles(articles.map(art => art.id === updatedArticle.id ? updatedArticle : art));
+      setCommentInput('');
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  // Handler for sharing that specific post uniquely
+  const handleShare = async () => {
+    const specificUrl = `${window.location.origin}${window.location.pathname}?post=${selectedArticle.id}`;
+    
+    const shareData = {
+      title: selectedArticle.title,
+      text: selectedArticle.excerpt || selectedArticle.title,
+      url: specificUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(specificUrl);
+      alert('Specific article link copied to clipboard!');
+    }
   };
 
   if (loading) {
@@ -364,11 +474,8 @@ const News = () => {
         .modal-scroll { 
           overflow-y: auto; 
           padding-bottom: 40px;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          scrollbar-width: thin;
         }
-
-        .modal-scroll::-webkit-scrollbar { display: none; }
 
         .close-btn {
           position: absolute;
@@ -392,6 +499,122 @@ const News = () => {
           color: #ffffff;
         }
 
+        /* Interaction Bar inside Modal */
+        .interaction-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          padding: 15px 20px;
+          border-top: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e2e8f0;
+          margin-top: 25px;
+          background: #f8fafc;
+        }
+
+        .interaction-btn {
+          background: transparent;
+          border: none;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: #334155;
+          cursor: pointer;
+          padding: 8px 16px;
+          border-radius: 8px;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .interaction-btn:hover {
+          background: #e2e8f0;
+          color: #0c1c8c;
+        }
+
+        .interaction-btn.liked {
+          color: #b91c1c;
+        }
+
+        /* Comments Section */
+        .comments-section {
+          margin-top: 25px;
+          padding: 0 5px;
+        }
+
+        .comments-title {
+          font-family: 'Bebas Neue', cursive;
+          font-size: 1.4rem;
+          color: #0c1c8c;
+          margin-bottom: 15px;
+          letter-spacing: 0.5px;
+        }
+
+        .comment-form {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+
+        .comment-input {
+          flex-grow: 1;
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1px solid #cbd5e1;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 0.9rem;
+          outline: none;
+          transition: border-color 0.2s ease;
+        }
+
+        .comment-input:focus {
+          border-color: #0c1c8c;
+        }
+
+        .comment-submit-btn {
+          background: #0c1c8c;
+          color: #ffffff;
+          border: none;
+          border-radius: 12px;
+          padding: 0 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s ease;
+        }
+
+        .comment-submit-btn:hover {
+          background: #08125c;
+        }
+
+        .comment-item {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px 16px;
+          margin-bottom: 10px;
+          font-size: 0.9rem;
+          color: #334155;
+        }
+
+        .view-more-comments {
+          background: transparent;
+          border: none;
+          color: #0c1c8c;
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin: 10px auto 0;
+          padding: 5px 10px;
+        }
+
+        .view-more-comments:hover {
+          text-decoration: underline;
+        }
+
         @media (max-width: 900px) {
           .featured-hero { grid-template-columns: 1fr; }
           .featured-img { height: 250px; min-height: auto; }
@@ -411,7 +634,7 @@ const News = () => {
             <div className="header-underline"></div>
             <p className="header-description">
               Welcome to the official news hub of the Stacon League. Stay up to date 
-              with live match reports, tactical breakdowns, community updates, and board announcements.
+              dengan live match reports, tactical breakdowns, community updates, and board announcements.
             </p>
           </header>
 
@@ -426,7 +649,7 @@ const News = () => {
                 <div className="featured-hero" onClick={() => setSelectedArticle(featured)}>
                   <div className="featured-img">
                     <img 
-                      src={getImageUrl(featured.image || featured.imageUrl)} 
+                      src={getImageUrl(featured.imageUrl, featured.id)} 
                       alt={featured.title} 
                       loading="lazy" 
                     />
@@ -451,7 +674,7 @@ const News = () => {
                   <div key={article.id} className="news-card" onClick={() => setSelectedArticle(article)}>
                     <div className="card-img">
                       <img 
-                        src={getImageUrl(article.image || article.imageUrl)} 
+                        src={getImageUrl(article.imageUrl, article.id)} 
                         alt={article.title} 
                         loading="lazy" 
                       />
@@ -481,12 +704,12 @@ const News = () => {
             
             <div className="modal-scroll">
               <img 
-                src={getImageUrl(selectedArticle.image || selectedArticle.imageUrl)} 
+                src={getImageUrl(selectedArticle.imageUrl, selectedArticle.id)} 
                 style={{ width: '100%', height: '300px', objectFit: 'cover', objectPosition: 'center 25%' }} 
                 alt={selectedArticle.title} 
                 loading="lazy"
               />
-              <div style={{ padding: '35px 30px' }}>
+              <div style={{ padding: '35px 30px 20px' }}>
                 <div style={{ display: 'flex', gap: '15px', marginBottom: '18px', alignItems: 'center' }}>
                   <span style={{ background: '#fef9c3', color: '#854d0e', padding: '5px 12px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #fde047', textTransform: 'uppercase' }}>
                     {selectedArticle.category || 'General'}
@@ -503,6 +726,73 @@ const News = () => {
                 <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontWeight: 500 }}>
                   {selectedArticle.content}
                 </div>
+
+                {/* LIKE, COMMENT, SHARE INTERACTION BAR */}
+                <div className="interaction-bar">
+                  <button className="interaction-btn" onClick={handleLike} disabled={isLiking}>
+                    <Heart size={18} fill={selectedArticle.likes > 0 ? "#b91c1c" : "none"} color="#b91c1c" />
+                    <span>{selectedArticle.likes || 0} Likes</span>
+                  </button>
+
+                  <button className="interaction-btn" onClick={() => document.getElementById('comment-input-field')?.focus()}>
+                    <MessageCircle size={18} color="#0c1c8c" />
+                    <span>{selectedArticle.comments?.length || 0} Comments</span>
+                  </button>
+
+                  <button className="interaction-btn" onClick={handleShare}>
+                    <Share2 size={18} color="#0c1c8c" />
+                    <span>Share</span>
+                  </button>
+                </div>
+
+                {/* COMMENTS SECTION */}
+                <div className="comments-section">
+                  <h3 className="comments-title">Discussion</h3>
+                  
+                  <form onSubmit={handleAddComment} className="comment-form">
+                    <input 
+                      id="comment-input-field"
+                      type="text" 
+                      className="comment-input" 
+                      placeholder="Write a comment..." 
+                      value={commentInput}
+                      onChange={(e) => setCommentInput(e.target.value)}
+                    />
+                    <button type="submit" className="comment-submit-btn">
+                      <Send size={16} />
+                    </button>
+                  </form>
+
+                  <div className="comments-list">
+                    {(!selectedArticle.comments || selectedArticle.comments.length === 0) ? (
+                      <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>No comments yet. Be the first to share your thoughts!</p>
+                    ) : (
+                      <>
+                        {(showAllComments 
+                          ? selectedArticle.comments 
+                          : selectedArticle.comments.slice(-1)
+                        ).map((comment) => (
+                          <div key={comment.id} className="comment-item">
+                            {comment.text}
+                          </div>
+                        ))}
+
+                        {selectedArticle.comments.length > 1 && !showAllComments && (
+                          <button className="view-more-comments" onClick={() => setShowAllComments(true)}>
+                            View more comments ({selectedArticle.comments.length - 1} earlier) <ChevronDown size={14} />
+                          </button>
+                        )}
+
+                        {showAllComments && selectedArticle.comments.length > 1 && (
+                          <button className="view-more-comments" onClick={() => setShowAllComments(false)}>
+                            Show less <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

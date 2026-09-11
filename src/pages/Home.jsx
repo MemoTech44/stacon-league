@@ -612,7 +612,7 @@ const Home = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Trophy size={18} color="#f3e73f" />
+                    <Trophy size={18} color="#0c1c8c" />
                   </div>
                   <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>League Standings</h3>
                 </div>
@@ -658,7 +658,7 @@ const Home = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Calendar size={18} color="#f3e73f" />
+                    <Calendar size={18} color="#0c1c8c" />
                   </div>
                   <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>Upcoming Fixtures</h3>
                 </div>
@@ -697,7 +697,7 @@ const Home = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Activity size={18} color="#f3e73f" />
+                    <Activity size={18} color="#0c1c8c" />
                   </div>
                   <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', color: '#0c1c8c' }}>Latest Results</h3>
                 </div>

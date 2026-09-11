@@ -79,15 +79,11 @@ const NewsManager = () => {
     try {
       let imageUrl = existingImageUrl;
       
-      // Check if storage is available and an image was selected
+      // FIXED: Properly check and await the storage upload and download URL generation without wrapping in a silent try/catch warning block
       if (image && storage) {
-        try {
-          const imageRef = ref(storage, `news/${Date.now()}_${image.name}`);
-          await uploadBytes(imageRef, image);
-          imageUrl = await getDownloadURL(imageRef);
-        } catch (storageError) {
-          console.warn("Storage upload failed, proceeding without new image upload:", storageError);
-        }
+        const imageRef = ref(storage, `news/${Date.now()}_${image.name}`);
+        const snapshot = await uploadBytes(imageRef, image);
+        imageUrl = await getDownloadURL(snapshot.ref);
       }
 
       if (editingId) {

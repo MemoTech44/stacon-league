@@ -16,17 +16,19 @@ const Champions = () => {
     const fetchChampionsData = async () => {
       setLoading(true);
       try {
-        // Fetch team logos from clubs collection
+        // Fetch team logos and photos from clubs collection
         const teamsSnapshot = await getDocs(collection(db, "clubs"));
         const logos = {};
         teamsSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          logos[data.name || data.teamName] = data.logoUrl || data.logo;
+          const teamKey = data.name || data.teamName;
+          if (teamKey) {
+            logos[teamKey] = data.logoUrl || data.logo || data.photoUrl || data.teamPhoto || data.image;
+          }
         });
         setTeamLogos(logos);
 
         // Fetch champions data from Firestore collection "champions"
-        // Admin manages entries with fields like: teamName, celebrationPhotoUrl, season, category (League, Gala, Stacon Cup)
         const q = query(collection(db, "champions"), orderBy("season", "desc"));
         const querySnapshot = await getDocs(q);
         const champData = querySnapshot.docs.map(doc => ({
@@ -312,10 +314,6 @@ const Champions = () => {
                 className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`} 
                 onClick={() => setSelectedCategory(cat)}
               >
-                {cat === 'League'}
-                {cat === 'Gala'}
-                {cat === 'Stacon Cup'}
-                {cat === 'All'}
                 {cat}
               </button>
             ))}
@@ -342,7 +340,7 @@ const Champions = () => {
                 <div key={champ.id} className="champ-card">
                   <div className="champ-image-container">
                     <img 
-                      src={champ.celebrationPhotoUrl || champ.photoUrl || `https://ui-avatars.com/api/?name=${champ.teamName}&background=0c1c8c&color=fff&size=600`} 
+                      src={champ.celebrationPhotoUrl || champ.photoUrl || champ.teamPhotoUrl || champ.image || `https://ui-avatars.com/api/?name=${champ.teamName}&background=0c1c8c&color=fff&size=600`} 
                       alt={`${champ.teamName} Celebration`}
                       className="champ-image"
                       crossOrigin="anonymous"
@@ -357,7 +355,7 @@ const Champions = () => {
                       <div className="champ-top-row">
                         <div className="champ-logo-frame">
                           <img 
-                            src={teamLogos[champ.teamName] || champ.logoUrl || `https://ui-avatars.com/api/?name=${champ.teamName}&background=f8fafc&color=0c1c8c`} 
+                            src={teamLogos[champ.teamName] || champ.logoUrl || champ.teamLogo || champ.photoUrl || `https://ui-avatars.com/api/?name=${champ.teamName}&background=f8fafc&color=0c1c8c`} 
                             alt={champ.teamName} 
                             className="champ-logo-img"
                             crossOrigin="anonymous"
@@ -372,7 +370,7 @@ const Champions = () => {
 
                     <div className="champ-details">
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Trophy size={15} color="#c59b27" /> Undisputed Winner
+                        <Trophy size={15} color="#c59b27" /> Winner Verified
                       </span>
                       <span style={{ fontFamily: 'Cinzel', fontWeight: 700, fontSize: '0.75rem', color: '#0c1c8c' }}>
                         {champ.season || 'Season 1'}

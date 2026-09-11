@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Download, Search, Save, Trash2, Eye, X, Shield, Edit3, Upload } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImage from './logo.png';
 
 const PlayerManager = () => {
   const [players, setPlayers] = useState([]);
@@ -119,7 +120,6 @@ const PlayerManager = () => {
     try {
       let finalPhotoUrl = editForm.photoUrl.trim();
 
-      // Handle image upload to Firebase Storage if a new file was selected
       if (imageFile) {
         const storageRef = ref(storage, `player-photos/${selectedPlayer.id}_${Date.now()}`);
         const snapshot = await uploadBytes(storageRef, imageFile);
@@ -145,7 +145,6 @@ const PlayerManager = () => {
       setPlayers(updatedPlayers);
       applyFilters(updatedPlayers, selectedTeam, searchTerm);
 
-      // Update selected player view and close edit mode
       setSelectedPlayer({ ...selectedPlayer, ...updatedData });
       setIsEditing(false);
     } catch (error) {
@@ -177,27 +176,62 @@ const PlayerManager = () => {
     applyFilters(players, selectedTeam, search);
   };
 
-  const generatePDF = () => {
+  // Helper to compress logo image and prevent PDF file bloat
+  const getCompressedLogoDataUrl = (imageSrc) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 120;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+      };
+      img.onerror = () => resolve(null);
+      img.src = imageSrc;
+    });
+  };
+
+  const generatePDF = async () => {
     try {
       const docInstance = new jsPDF();
+      const pageWidth = docInstance.internal.pageSize.getWidth();
       const currentDate = new Date().toLocaleString();
 
-      docInstance.setFillColor(15, 23, 42);
-      docInstance.rect(0, 0, docInstance.internal.pageSize.getWidth(), 35, 'F');
+      // Top Dark Banner Background
+      docInstance.setFillColor(6, 13, 61);
+      docInstance.rect(0, 0, pageWidth, 42, 'F');
 
+      // Compress and embed logo cleanly to keep file size low
+      try {
+        const compressedLogo = await getCompressedLogoDataUrl(logoImage);
+        if (compressedLogo) {
+          docInstance.addImage(compressedLogo, 'JPEG', 14, 8, 25, 25);
+        }
+      } catch (imgErr) {
+        console.warn("Could not embed compressed logo image in PDF:", imgErr);
+      }
+
+      // Header Text Details (Stacon League Branding)
       docInstance.setFont("helvetica", "bold");
-      docInstance.setFontSize(15);
-      docInstance.setTextColor(250, 204, 21);
-      docInstance.text('ST. JEROME LEAGUE - OFFICIAL PLAYER ROSTER', 14, 18);
+      docInstance.setFontSize(14);
+      docInstance.setTextColor(243, 231, 63);
+      docInstance.text('STACON LEAGUE - OFFICIAL PLAYER ROSTER', 45, 16);
       
       docInstance.setFont("helvetica", "normal");
-      docInstance.setFontSize(8.5);
+      docInstance.setFontSize(8);
       docInstance.setTextColor(203, 213, 225);
-      docInstance.text(`Filter: ${selectedTeam.toUpperCase()} | Downloaded on: ${currentDate}`, 14, 26);
+      docInstance.text('Kampala, Uganda  |  Web: www.staconleague.com  |  Email: info@staconleague.com  |  X: @stacon_league', 45, 23);
+      docInstance.text(`Filter Category: ${selectedTeam.toUpperCase()}   |   Generated On: ${currentDate}`, 45, 30);
 
+      // Sub-note disclaimer
       docInstance.setFontSize(7.5);
       docInstance.setTextColor(148, 163, 184);
-      docInstance.text('Note: Registration remains active; this export represents records captured up to the timestamp above.', 14, 43);
+      docInstance.text('Note: Official registration records capture data up to the timestamp above.', 14, 49);
 
       const tableData = filteredPlayers.map((p, index) => [
         index + 1,
@@ -209,12 +243,12 @@ const PlayerManager = () => {
       ]);
 
       autoTable(docInstance, {
-        startY: 48,
+        startY: 54,
         head: [['#', 'Player Name', 'Team', 'Position', 'Shirt #', 'Goals']],
         body: tableData,
         headStyles: { 
-          fillColor: [30, 58, 138], 
-          textColor: [250, 204, 21],
+          fillColor: [12, 28, 140], 
+          textColor: [243, 231, 63],
           fontStyle: 'bold',
           fontSize: 9
         },
@@ -228,7 +262,7 @@ const PlayerManager = () => {
         margin: { left: 14, right: 14 }
       });
 
-      docInstance.save(`${selectedTeam}_Roster_${Date.now()}.pdf`);
+      docInstance.save(`STACON_League_${selectedTeam}_Roster_${Date.now()}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to export PDF. Please check console.");
@@ -280,7 +314,7 @@ const PlayerManager = () => {
           padding: 10px 14px;
           border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.1);
-          background: #0b1329;
+          background: linear-gradient(135deg, rgba(12, 28, 140, 0.45) 0%, rgba(6, 13, 61, 0.85) 100%);
           color: #ffffff;
           font-weight: 400;
           font-size: 0.85rem;
@@ -289,12 +323,12 @@ const PlayerManager = () => {
         }
 
         .input-style:focus {
-          border-color: #facc15;
-          box-shadow: 0 0 10px rgba(250, 204, 21, 0.15);
+          border-color: #f3e73f;
+          box-shadow: 0 0 10px rgba(243, 231, 63, 0.15);
         }
 
         .table-container {
-          background: rgba(15, 23, 42, 0.75);
+          background: linear-gradient(135deg, rgba(12, 28, 140, 0.45) 0%, rgba(6, 13, 61, 0.85) 100%);
           backdrop-filter: blur(16px);
           border-radius: 20px;
           border: 1px solid rgba(255, 255, 255, 0.08);
@@ -310,8 +344,8 @@ const PlayerManager = () => {
         }
 
         .custom-th {
-          background: #0b1329;
-          color: #facc15;
+          background: #060d3d;
+          color: #f3e73f;
           padding: 15px;
           font-size: 0.7rem;
           text-transform: uppercase;
@@ -329,7 +363,7 @@ const PlayerManager = () => {
         }
 
         .custom-tr:hover {
-          background: rgba(250, 204, 21, 0.03);
+          background: rgba(243, 231, 63, 0.03);
           cursor: pointer;
         }
 
@@ -354,9 +388,9 @@ const PlayerManager = () => {
         }
 
         .icon-btn:hover {
-          background: rgba(250, 204, 21, 0.15);
-          border-color: #facc15;
-          color: #facc15;
+          background: rgba(243, 231, 63, 0.15);
+          border-color: #f3e73f;
+          color: #f3e73f;
         }
 
         .icon-btn.delete:hover {
@@ -378,8 +412,8 @@ const PlayerManager = () => {
         }
 
         .modal-content {
-          background: #0f172a;
-          border: 1px solid rgba(250, 204, 21, 0.3);
+          background: linear-gradient(135deg, rgba(12, 28, 140, 0.65) 0%, rgba(6, 13, 61, 0.95) 100%);
+          border: 1px solid rgba(243, 231, 63, 0.3);
           border-radius: 24px;
           width: 100%;
           max-width: 450px;
@@ -416,7 +450,7 @@ const PlayerManager = () => {
         
         <button 
           onClick={generatePDF} 
-          style={{ background: '#facc15', color: '#04060d', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(250, 204, 21, 0.25)' }}
+          style={{ background: '#f3e73f', color: '#04060d', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', boxShadow: '0 4px 15px rgba(243, 231, 63, 0.25)' }}
         >
           <Download size={16} /> EXPORT PDF ROSTER
         </button>
@@ -482,7 +516,7 @@ const PlayerManager = () => {
                         className="input-style"
                         style={{ width: '55px', padding: '6px', textAlign: 'center' }}
                       />
-                      {updatingId === p.id && <Save size={14} className="animate-pulse" color="#facc15" />}
+                      {updatingId === p.id && <Save size={14} className="animate-pulse" color="#f3e73f" />}
                     </div>
                   </td>
                   <td className="custom-td" onClick={(e) => e.stopPropagation()}>
@@ -522,8 +556,8 @@ const PlayerManager = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Shield size={20} color="#facc15" />
-                <h3 style={{ margin: 0, color: '#facc15', fontSize: '1rem', fontWeight: 900 }}>
+                <Shield size={20} color="#f3e73f" />
+                <h3 style={{ margin: 0, color: '#f3e73f', fontSize: '1rem', fontWeight: 900 }}>
                   {isEditing ? 'EDIT PLAYER DETAILS' : 'REGISTRATION DETAILS'}
                 </h3>
               </div>
@@ -538,13 +572,13 @@ const PlayerManager = () => {
                   <img 
                     src={selectedPlayer.photoUrl || 'https://via.placeholder.com/100'} 
                     alt="Player Profile" 
-                    style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #facc15', marginBottom: '10px' }} 
+                    style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f3e73f', marginBottom: '10px' }} 
                   />
                   <h2 style={{ margin: 0, fontSize: '1.1rem', textAlign: 'center', fontWeight: 'normal' }}>{selectedPlayer.name ? selectedPlayer.name.toUpperCase() : ''}</h2>
                   <span style={{ fontSize: '0.8rem', color: '#93c5fd', marginTop: '4px' }}>{selectedPlayer.team || 'No Team'}</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#0b1329', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: 'rgba(6, 13, 61, 0.45)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                   <div>
                     <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>Team Number</span>
                     <p style={{ margin: '2px 0 0 0', fontWeight: 600, fontSize: '0.85rem' }}>{selectedPlayer.teamNumber || 'N/A'}</p>
@@ -566,13 +600,13 @@ const PlayerManager = () => {
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                   <button 
                     onClick={() => handleStartEdit(selectedPlayer)}
-                    style={{ flex: 1, background: 'rgba(250, 204, 21, 0.15)', color: '#facc15', border: '1px solid #facc15', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
+                    style={{ flex: 1, background: 'rgba(243, 231, 63, 0.15)', color: '#f3e73f', border: '1px solid #f3e73f', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
                   >
                     Edit Info
                   </button>
                   <button 
                     onClick={() => { setSelectedPlayer(null); setIsEditing(false); }}
-                    style={{ flex: 1, background: '#facc15', color: '#04060d', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
+                    style={{ flex: 1, background: '#f3e73f', color: '#04060d', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
                   >
                     Close
                   </button>
@@ -598,9 +632,9 @@ const PlayerManager = () => {
                     <img 
                       src={imagePreview || 'https://via.placeholder.com/80'} 
                       alt="Preview" 
-                      style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #facc15' }} 
+                      style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #f3e73f' }} 
                     />
-                    <label style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#0b1329', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', color: '#facc15' }}>
+                    <label style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(6, 13, 61, 0.45)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', color: '#f3e73f' }}>
                       <Upload size={16} /> Upload New Photo
                       <input 
                         type="file" 
@@ -660,7 +694,7 @@ const PlayerManager = () => {
                   <button 
                     type="submit" 
                     disabled={savingEdit}
-                    style={{ flex: 1, background: '#facc15', color: '#04060d', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
+                    style={{ flex: 1, background: '#f3e73f', color: '#04060d', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', textTransform: 'uppercase', fontSize: '0.8rem' }}
                   >
                     {savingEdit ? 'Saving...' : 'Save Changes'}
                   </button>
