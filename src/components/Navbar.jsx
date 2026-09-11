@@ -14,7 +14,7 @@ const Navbar = () => {
     { name: 'News', path: '/news' },
     { name: 'Players', path: '/players' },
     { name: 'Fixtures', path: '/fixtures' },
-    { name: 'Results', path: '/results' },
+    { name: 'Champions', path: '/results' },
     { name: 'Table', path: '/table' },
     { name: 'Gallery', path: '/GalleryView' },
     { name: 'Contact', path: '/contact' },

@@ -16,6 +16,7 @@ import FixturesManager from './FixturesManager';
 import ResultsManager from './ResultsManager';
 import TeamManager from './TeamManager';
 import ChampionsManager from './ChampionsManager';
+import SponsorManager from './SponsorManager';
 import ExecutiveManager from './ExecutiveManager';
 import ContactMessages from './ContactMessages';
 import PlayerManager from './PlayerManager';
@@ -40,6 +41,7 @@ const Dashboard = () => {
     clubs: { title: "Club Database", desc: "View and manage registered league teams, update official information, and manage club rosters." },
     players: { title: "Player Registry", desc: "Maintain the comprehensive registry of all active players, including registration numbers and squad affiliations." },
     champions: { title: "Champions Archive", desc: "Access the historical record of league champions, including past winners and their respective seasons." },
+    sponsors: { title: "Sponsor Management", desc: "Manage sponsorships, update branding assets, and track partnership agreements." },
     gallery: { title: "Matchday Gallery", desc: "Manage Google Drive photo albums and preview images for matchday galleries displayed on the public portal." },
     exec: { title: "Executive Board", desc: "Manage the official profiles and hierarchy of the league leadership and technical committee." },
     inbox: { title: "Message Inbox", desc: "Review and respond to inquiries, feedback, and collaboration requests received through contact forms." }
@@ -88,6 +90,7 @@ const Dashboard = () => {
     { id: 'clubs', label: 'Clubs', icon: Trophy },
     { id: 'players', label: 'Players', icon: UserCircle },
     { id: 'champions', label: 'Champions', icon: Trophy },
+    { id: 'sponsors', label: 'Sponsors', icon: Newspaper },
     { id: 'gallery', label: 'Gallery', icon: ImageIcon },
     { id: 'exec', label: 'Execs', icon: Users },
     { id: 'inbox', label: 'Inbox', icon: MessageSquare },
@@ -424,6 +427,7 @@ const Dashboard = () => {
            activeTab === 'fixtures' ? <FixturesManager /> :
            activeTab === 'results' ? <ResultsManager /> :
            activeTab === 'clubs' ? <TeamManager /> :
+           activeTab === 'sponsors' ? <SponsorManager /> :
            activeTab === 'champions' ? <ChampionsManager /> : 
            activeTab === 'players' ? <PlayerManager /> :
            activeTab === 'gallery' ? <GalleryAdmin /> :

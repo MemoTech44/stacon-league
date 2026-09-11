@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { ArrowRight, Shield, Heart, Users, Calendar, Trophy, Activity, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, Shield, Heart, Users, Calendar, Trophy, Activity, Image as ImageIcon, Award } from 'lucide-react';
 
 // Assets imported from project directory
 import bachweziImg from '../assets/bachwezi.jpg';
@@ -27,6 +27,7 @@ const Home = () => {
   const [standings, setStandings] = useState([]);
   const [fixtures, setFixtures] = useState([]);
   const [results, setResults] = useState([]);
+  const [sponsors, setSponsors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Banner sliding images dataset utilizing different asset options
@@ -93,6 +94,11 @@ const Home = () => {
         const fetchedResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setResults(fetchedResults.slice(0, 3));
 
+        // Fetch Sponsors & Partners
+        const sponsorsSnap = await getDocs(collection(db, "sponsors"));
+        const fetchedSponsors = sponsorsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSponsors(fetchedSponsors);
+
       } catch (err) {
         console.error("Error fetching homepage data:", err);
       } finally {
@@ -117,7 +123,7 @@ const Home = () => {
         
         .hero-viewport { 
           position: relative; 
-          background: #060d3d;
+          background: #f8f8fa;
           display: flex; 
           align-items: center; 
           justify-content: center; 
@@ -234,8 +240,6 @@ const Home = () => {
           transition: all 0.3s ease;
           border: 2px solid #f3e73f;
         }
-
-        
 
         .glass-card {
           background: #ffffff;
@@ -788,12 +792,44 @@ const Home = () => {
               <div key={item.id} onClick={() => navigate('/news')} className="pulse-card">
                 <img src={item.image || item.imageUrl || sideAssets[index % sideAssets.length]} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, border: '1px solid #e2e8f0' }} alt={item.title || "News Image"} />
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f3e73f', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', letterSpacing: '1px' }}>{item.displayDate}</span>
-                  <h4 style={{ margin: '6px 0', fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.35, textTransform: 'capitalize' }}>{item.title}</h4>
-                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>
-                    {item.excerpt || (item.content ? item.content.substring(0, 65) + '...' : '')}
-                  </p>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706', fontFamily: 'Cinzel, serif', textTransform: 'uppercase', marginBottom: '4px' }}>{item.displayDate}</span>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>{item.title || 'STACON League Update'}</h4>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.content || item.description || 'Click to read more about this update.'}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* SPONSORS AND PARTNERS SECTION */}
+      <section style={{ padding: '20px 4% 60px', maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', fontFamily: 'Cinzel, serif', letterSpacing: '3px', textTransform: 'uppercase' }}>Valued Supporters</span>
+          <h2 className="gold-heading" style={{ marginTop: '6px' }}>Sponsors & Partners</h2>
+        </div>
+
+        {loading ? (
+          <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>Loading sponsors and partners...</p>
+        ) : sponsors.length === 0 ? (
+          <p style={{ color: '#475569', fontSize: '0.9rem', textAlign: 'center', padding: '30px' }}>No sponsors or partners listed at the moment.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+            {sponsors.map((sponsor) => (
+              <div key={sponsor.id} className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '20px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', overflow: 'hidden', padding: '10px' }}>
+                  <img 
+                    src={sponsor.logo || sponsor.imageUrl || logoImg} 
+                    alt={sponsor.name || sponsor.companyName || 'Sponsor Logo'} 
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                  />
+                </div>
+                <h4 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', fontWeight: 700, color: '#0c1c8c', margin: '0 0 10px 0' }}>
+                  {sponsor.name || sponsor.companyName || 'Partner Name'}
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#475569', lineHeight: 1.6 }}>
+                  {sponsor.description || sponsor.bio || 'Proudly supporting the STACON League vision and community development.'}
+                </p>
               </div>
             ))}
           </div>

@@ -148,6 +148,17 @@ const Footer = () => {
           letter-spacing: 1px;
         }
 
+        .developer-link {
+          color: #f3e73f;
+          text-decoration: none;
+          transition: opacity 0.2s ease;
+        }
+
+        .developer-link:hover {
+          opacity: 0.8;
+          text-decoration: underline;
+        }
+
         @media (max-width: 900px) {
           .footer-grid {
             grid-template-columns: 1fr;
@@ -206,10 +217,15 @@ const Footer = () => {
 
           <div className="footer-bottom">
             <div className="copyright">
-              © {currentYear} STACON League. All rights reserved.
-            </div>
-            <div className="copyright" style={{ color: '#d97706' }}>
-              Est. 2026
+              © {currentYear} STACON League. All rights reserved. Developed by{' '}
+              <a 
+                href="https://atumanya-memory.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="developer-link"
+              >
+                MemoTech Solutions
+              </a>
             </div>
           </div>
         </div>

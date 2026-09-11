@@ -388,7 +388,7 @@ const About = () => {
           width: 100%;
         }
 
-        .team-logo-container img {
+        .team-logo {
           max-width: 75px; 
           max-height: 75px; 
           object-fit: contain; 
@@ -592,11 +592,16 @@ const About = () => {
             {teams.map((team) => (
               <div key={team.id} className="team-card" onClick={() => setSelectedTeam(team)}>
                 <div className="team-logo-container">
-                  <img 
-                    src={getImageUrl(team.logo || team.imageUrl)} 
-                    alt={team.name} 
-                    loading="lazy" 
-                  />
+                  {team.logo ? (
+                    <img src={team.logo} className="team-logo" crossOrigin="anonymous" alt=""/>
+                  ) : (
+                    <img 
+                      src={getImageUrl(team.logoUrl)} 
+                      alt={team.name} 
+                      className="team-logo"
+                      loading="lazy" 
+                    />
+                  )}
                 </div>
                 <h3 className="team-name">{team.name}</h3>
                 <div className="read-more-btn">
@@ -619,12 +624,18 @@ const About = () => {
             
             <div className="modal-scroll">
               <div style={{ background: '#f1f5f9', padding: '40px 20px', textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>
-                <img 
-                  src={getImageUrl(selectedTeam.logo || selectedTeam.imageUrl)} 
-                  style={{ width: '90px', height: '90px', objectFit: 'contain', margin: '0 auto 15px' }} 
-                  alt={selectedTeam.name} 
-                  loading="lazy"
-                />
+                <div style={{ width: '90px', height: '90px', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {selectedTeam.logo ? (
+                    <img src={selectedTeam.logo} className="team-logo" style={{ maxWidth: '90px', maxHeight: '90px', objectFit: 'contain' }} crossOrigin="anonymous" alt=""/>
+                  ) : (
+                    <img 
+                      src={getImageUrl(selectedTeam.logoUrl)} 
+                      style={{ width: '90px', height: '90px', objectFit: 'contain' }} 
+                      alt={selectedTeam.name} 
+                      loading="lazy"
+                    />
+                  )}
+                </div>
                 <h2 style={{ fontFamily: 'Bebas Neue, cursive', fontSize: '2.2rem', color: '#0c1c8c', margin: 0, letterSpacing: '0.8px' }}>
                   {selectedTeam.name}
                 </h2>

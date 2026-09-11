@@ -24,109 +24,108 @@ import {
   Send, 
   Clock, 
   FileText,
-  Newspaper
+  Briefcase
 } from 'lucide-react';
 
-const NewsManager = () => {
-  const [news, setNews] = useState([]);
+const SponsorsManager = () => {
+  const [sponsors, setSponsors] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   const [loading, setLoading] = useState(false);
   
   // Form State
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [image, setImage] = useState(null);
-  const [existingImageUrl, setExistingImageUrl] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [logo, setLogo] = useState(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState('');
 
   useEffect(() => {
-    fetchNews();
+    fetchSponsors();
   }, []);
 
-  const fetchNews = async () => {
+  const fetchSponsors = async () => {
     try {
-      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "sponsors"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
-      const newsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNews(newsData);
+      const sponsorsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSponsors(sponsorsData);
     } catch (error) {
-      console.error("Error fetching news:", error);
+      console.error("Error fetching sponsors:", error);
     }
   };
 
   const handleEditClick = (item) => {
     setEditingId(item.id);
-    setTitle(item.title);
-    setContent(item.content);
-    setExistingImageUrl(item.imageUrl || '');
+    setName(item.name);
+    setDescription(item.description);
+    setExistingLogoUrl(item.logoUrl || '');
     setIsAdding(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
-    setTitle('');
-    setContent('');
-    setImage(null);
-    setExistingImageUrl('');
+    setName('');
+    setDescription('');
+    setLogo(null);
+    setExistingLogoUrl('');
     setEditingId(null);
     setIsAdding(false);
   };
 
-  const handlePostNews = async (e) => {
+  const handleSaveSponsor = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      let imageUrl = existingImageUrl;
+      let logoUrl = existingLogoUrl;
       
-      // FIXED: Properly check and await the storage upload and download URL generation without wrapping in a silent try/catch warning block
-      if (image && storage) {
-        const imageRef = ref(storage, `news/${Date.now()}_${image.name}`);
-        const snapshot = await uploadBytes(imageRef, image);
-        imageUrl = await getDownloadURL(snapshot.ref);
+      if (logo && storage) {
+        const logoRef = ref(storage, `sponsors/${Date.now()}_${logo.name}`);
+        const snapshot = await uploadBytes(logoRef, logo);
+        logoUrl = await getDownloadURL(snapshot.ref);
       }
 
       if (editingId) {
-        await updateDoc(doc(db, "news", editingId), {
-          title, 
-          content, 
-          imageUrl, 
+        await updateDoc(doc(db, "sponsors", editingId), {
+          name, 
+          description, 
+          logoUrl, 
           updatedAt: serverTimestamp(),
         });
       } else {
-        await addDoc(collection(db, "news"), {
-          title, 
-          content, 
-          imageUrl, 
+        await addDoc(collection(db, "sponsors"), {
+          name, 
+          description, 
+          logoUrl, 
           createdAt: serverTimestamp(),
         });
       }
       resetForm();
-      fetchNews();
+      fetchSponsors();
     } catch (error) {
-      console.error("Error saving article:", error);
-      alert("Error saving article. Check console for details.");
+      console.error("Error saving sponsor:", error);
+      alert("Error saving sponsor. Check console for details.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this news post?")) {
+    if (window.confirm("Delete this sponsor?")) {
       try {
-        await deleteDoc(doc(db, "news", id));
-        fetchNews();
+        await deleteDoc(doc(db, "sponsors", id));
+        fetchSponsors();
       } catch (error) { 
         console.error("Error deleting:", error);
-        alert("Error deleting article."); 
+        alert("Error deleting sponsor."); 
       }
     }
   };
 
   return (
-    <div className="news-container">
+    <div className="sponsors-container">
       <style>{`
-        .news-container { 
+        .sponsors-container { 
           animation: fadeIn 0.5s ease; 
           padding-bottom: 50px; 
           width: 100%; 
@@ -204,9 +203,9 @@ const NewsManager = () => {
           background: rgba(243, 231, 63, 0.08); 
         }
 
-        .news-feed { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        .sponsors-feed { display: flex; flex-direction: column; gap: 20px; width: 100%; }
 
-        .article-card { 
+        .sponsor-card { 
           background: linear-gradient(135deg, rgba(12, 28, 140, 0.3) 0%, rgba(6, 13, 61, 0.75) 100%); 
           backdrop-filter: blur(16px);
           border-radius: 20px; 
@@ -219,13 +218,13 @@ const NewsManager = () => {
           box-sizing: border-box;
         }
 
-        .article-card:hover { 
+        .sponsor-card:hover { 
           border-color: rgba(243, 231, 63, 0.4); 
           transform: translateY(-2px);
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .article-main { 
+        .sponsor-main { 
           display: flex; 
           flex-direction: row; 
           align-items: center; 
@@ -234,7 +233,7 @@ const NewsManager = () => {
           width: 100%;
         }
 
-        .article-content-wrapper {
+        .sponsor-content-wrapper {
           display: flex;
           align-items: center;
           gap: 16px;
@@ -242,23 +241,24 @@ const NewsManager = () => {
           min-width: 0;
         }
         
-        .article-thumb { 
+        .sponsor-thumb { 
           width: 80px; 
           height: 80px; 
           min-width: 80px;
           border-radius: 14px; 
-          object-fit: cover; 
+          object-fit: contain; 
           background: rgba(255, 255, 255, 0.05); 
           border: 1px solid rgba(255, 255, 255, 0.15);
+          padding: 4px;
         }
 
-        .article-text {
+        .sponsor-text {
           min-width: 0;
           flex: 1;
           text-align: left;
         }
 
-        .article-title {
+        .sponsor-title {
           margin: 0 0 6px 0;
           font-size: 1.2rem;
           font-family: 'Bebas Neue', sans-serif;
@@ -268,7 +268,7 @@ const NewsManager = () => {
           word-break: break-word;
         }
 
-        .article-meta {
+        .sponsor-meta {
           display: flex;
           align-items: center;
           gap: 10px;
@@ -346,14 +346,14 @@ const NewsManager = () => {
         }
 
         @media (max-width: 640px) {
-          .article-main { 
+          .sponsor-main { 
             flex-direction: column; 
             align-items: flex-start; 
           }
-          .article-content-wrapper {
+          .sponsor-content-wrapper {
             width: 100%;
           }
-          .article-thumb { 
+          .sponsor-thumb { 
             width: 100px; 
             height: 100px; 
             min-width: 100px;
@@ -372,10 +372,10 @@ const NewsManager = () => {
       <div className="header-section">
         <div style={{ textAlign: 'left' }}>
           <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', color: '#ffffff', margin: 0, letterSpacing: '1px' }}>
-            League Newsroom
+            Sponsors Manager
           </h3>
           <p style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.85rem', margin: 0 }}>
-            {news.length} {news.length === 1 ? 'Article' : 'Articles'} Published
+            {sponsors.length} {sponsors.length === 1 ? 'Sponsor' : 'Sponsors'} Registered
           </p>
         </div>
         
@@ -399,58 +399,58 @@ const NewsManager = () => {
             boxShadow: isAdding ? 'none' : '0 4px 15px rgba(243, 231, 63, 0.25)'
           }}
         >
-          {isAdding ? <><X size={18} /> Close Editor</> : <><Plus size={18} /> Create Post</>}
+          {isAdding ? <><X size={18} /> Close Editor</> : <><Plus size={18} /> Add Sponsor</>}
         </button>
       </div>
 
       {/* Editor Form */}
       {isAdding && (
-        <form className="editor-card" onSubmit={handlePostNews}>
+        <form className="editor-card" onSubmit={handleSaveSponsor}>
           <div className="form-grid">
             <div className="input-group">
-              <label><FileText size={16}/> Headline Title</label>
+              <label><Briefcase size={16}/> Company Name</label>
               <input 
                 className="custom-input"
-                placeholder="Enter article title..."
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
+                placeholder="Enter sponsor company name..."
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
                 required 
               />
             </div>
             
             <div className="input-group">
-              <label><Newspaper size={16}/> Article Content</label>
+              <label><FileText size={16}/> Company Description</label>
               <textarea 
                 className="custom-input"
-                rows="6" 
-                placeholder="Write the complete article content here..."
-                value={content} 
-                onChange={(e) => setContent(e.target.value)} 
+                rows="4" 
+                placeholder="Write a brief overview of the sponsor company..."
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
                 required 
               />
             </div>
             
             <div className="input-group">
-              <label><ImageIcon size={16}/> Featured Image</label>
-              <div className="upload-trigger" onClick={() => document.getElementById('newsImg').click()}>
+              <label><ImageIcon size={16}/> Company Logo</label>
+              <div className="upload-trigger" onClick={() => document.getElementById('sponsorLogo').click()}>
                  <ImageIcon size={26} color="#f3e73f" style={{ marginBottom: '8px' }}/>
                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: '#e2e8f0' }}>
-                   {image ? `Selected: ${image.name}` : existingImageUrl ? "Click to replace existing image" : "Upload article thumbnail"}
+                   {logo ? `Selected: ${logo.name}` : existingLogoUrl ? "Click to replace existing logo" : "Upload company logo"}
                  </p>
-                 <input id="newsImg" type="file" hidden accept="image/*" onChange={(e) => setImage(e.target.files[0])} />
+                 <input id="sponsorLogo" type="file" hidden accept="image/*" onChange={(e) => setLogo(e.target.files[0])} />
               </div>
             </div>
 
             <button className="publish-btn" disabled={loading} type="submit">
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18}/> {editingId ? "Update Article" : "Publish Article"}</>}
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18}/> {editingId ? "Update Sponsor" : "Save Sponsor"}</>}
             </button>
           </div>
         </form>
       )}
 
-      {/* News Feed List */}
-      <div className="news-feed">
-        {news.length === 0 ? (
+      {/* Sponsors Feed List */}
+      <div className="sponsors-feed">
+        {sponsors.length === 0 ? (
           <div style={{ 
             padding: '40px 20px', 
             background: 'linear-gradient(135deg, rgba(12, 28, 140, 0.3) 0%, rgba(6, 13, 61, 0.75) 100%)', 
@@ -461,40 +461,40 @@ const NewsManager = () => {
             fontWeight: 600,
             fontSize: '0.9rem' 
           }}>
-            No news articles found in the database.
+            No sponsors found in the database.
           </div>
         ) : (
-          news.map((item) => (
-            <div key={item.id} className="article-card">
-              <div className="article-main">
-                <div className="article-content-wrapper">
+          sponsors.map((item) => (
+            <div key={item.id} className="sponsor-card">
+              <div className="sponsor-main">
+                <div className="sponsor-content-wrapper">
                   <img 
-                    src={item.imageUrl || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=300'} 
-                    alt="Article thumbnail" 
-                    className="article-thumb" 
+                    src={item.logoUrl || 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=300'} 
+                    alt="Sponsor logo" 
+                    className="sponsor-thumb" 
                   />
-                  <div className="article-text">
-                    <h4 className="article-title">
-                      {item.title}
+                  <div className="sponsor-text">
+                    <h4 className="sponsor-title">
+                      {item.name}
                     </h4>
-                    <div className="article-meta">
+                    <div className="sponsor-meta">
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Clock size={12} color="#f3e73f" /> 
                         {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Just now'}
                       </span>
-                      <span style={{ color: '#f3e73f', textTransform: 'uppercase', letterSpacing: '0.5px' }}>● Official</span>
+                      <span style={{ color: '#f3e73f', textTransform: 'uppercase', letterSpacing: '0.5px' }}>● Partner</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="action-tray">
-                  <button className="icon-btn btn-view" title="Preview Story" onClick={() => setViewingId(viewingId === item.id ? null : item.id)}>
+                  <button className="icon-btn btn-view" title="Preview Description" onClick={() => setViewingId(viewingId === item.id ? null : item.id)}>
                     {viewingId === item.id ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
-                  <button className="icon-btn btn-edit" title="Edit Article" onClick={() => handleEditClick(item)}>
+                  <button className="icon-btn btn-edit" title="Edit Sponsor" onClick={() => handleEditClick(item)}>
                     <Edit3 size={18} />
                   </button>
-                  <button className="icon-btn btn-del" title="Delete Article" onClick={() => handleDelete(item.id)}>
+                  <button className="icon-btn btn-del" title="Delete Sponsor" onClick={() => handleDelete(item.id)}>
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -511,21 +511,23 @@ const NewsManager = () => {
                   animation: 'fadeIn 0.3s ease'
                 }}>
                   <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: '#e2e8f0', whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {item.content}
+                    {item.description}
                   </p>
-                  {item.imageUrl && (
-                    <img 
-                      src={item.imageUrl} 
-                      alt="Article attachment" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '300px', 
-                        objectFit: 'cover', 
-                        marginTop: '16px', 
-                        borderRadius: '10px',
-                        border: '1px solid rgba(255, 255, 255, 0.15)' 
-                      }} 
-                    />
+                  {item.logoUrl && (
+                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                      <img 
+                        src={item.logoUrl} 
+                        alt="Company logo preview" 
+                        style={{ 
+                          maxHeight: '120px', 
+                          objectFit: 'contain', 
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          padding: '10px',
+                          background: 'rgba(255, 255, 255, 0.05)'
+                        }} 
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -536,4 +538,5 @@ const NewsManager = () => {
     </div>
   );
 };
-export default NewsManager;
+
+export default SponsorsManager;
