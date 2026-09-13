@@ -143,13 +143,13 @@ const Home = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 5.5;
+          opacity: 2.5;
         }
 
         .hero-overlay-gradient {
           position: absolute;
           inset: 0;
-          background: linear-gradient(135deg, rgba(6, 13, 61, 0.95) 0%, rgba(12, 28, 140, 0.85) 100%);
+          background: linear-gradient(135deg, #0c1c8c 0%, rgba(12, 28, 140, 0.85) 100%);
           z-index: 2;
         }
 
@@ -209,7 +209,7 @@ const Home = () => {
           gap: 20px;
           
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(217, 119, 6, 0.3);
+          border: 1px solid #f3e73f;
           padding: 30px;
           border-radius: 24px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
