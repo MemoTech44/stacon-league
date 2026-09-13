@@ -54,7 +54,7 @@ const Champions = () => {
   return (
     <>
       <Helmet>
-        <title>Hall of Champions | St. Jerome League</title>
+        <title>Wall of Champions | Stacon League</title>
       </Helmet>
 
       <div className="champions-page">
@@ -303,7 +303,7 @@ const Champions = () => {
             <span className="header-tag">
               CHAMPIONS AND GLORY
             </span>
-            <h1>HALL OF <span className="gold-text">FAME</span></h1>
+            <h1>WALL OF <span className="gold-text">FAME</span></h1>
             <div className="header-underline"></div>
           </header>
 
@@ -323,7 +323,7 @@ const Champions = () => {
             <div style={{ height: '35vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <Loader2 className="animate-spin" size={48} color="#0c1c8c" />
               <p style={{ marginTop: '20px', fontWeight: 800, color: '#0c1c8c', letterSpacing: '2px', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-                Loading Champions Hall...
+                Loading Champions Wall...
               </p>
             </div>
           ) : filteredChampions.length === 0 ? (

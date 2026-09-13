@@ -42,7 +42,7 @@ const GalleryView = () => {
         
         .color-blue { color: #0c1c8c; }
         .color-yellow { color: #c59b27; }
-        .color-red { color: #b91c1c; }
+        
 
         /* Header Styling */
         .header-box { text-align: center; margin-bottom: 50px; }
@@ -71,7 +71,7 @@ const GalleryView = () => {
         .header-underline { 
           width: 80px; 
           height: 4px; 
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c); 
+          background: linear-gradient(90deg, #0c1c8c, #c59b27); 
           margin: 20px auto 25px; 
           border-radius: 4px; 
         }
@@ -157,10 +157,6 @@ const GalleryView = () => {
           border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
           transform: translateY(-4px);
-        }
-
-        .gallery-card:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .card-header { 

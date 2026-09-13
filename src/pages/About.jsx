@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { 
   Target, Eye, Loader2, Shield, 
-  History, UserCheck, Flag, Briefcase, ChevronRight, Sparkles, X, Calendar 
+  History, UserCheck, Flag, Briefcase, ChevronRight, Sparkles, X, Calendar, User, Award 
 } from 'lucide-react';
 
 import heroImg from '../assets/top.jpg';
@@ -163,25 +163,9 @@ const About = () => {
           position: relative;
         }
 
-        .featured-hero::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
-          z-index: 2;
-        }
-
         .featured-hero:hover { 
           border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.12);
-        }
-
-        .featured-hero:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .featured-content {
@@ -237,26 +221,10 @@ const About = () => {
           position: relative;
         }
 
-        .news-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
-          z-index: 2;
-        }
-
         .news-card:hover { 
           transform: translateY(-8px); 
           border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1); 
-        }
-
-        .news-card:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .card-body { 
@@ -357,26 +325,10 @@ const About = () => {
           position: relative;
         }
 
-        .team-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
-          z-index: 2;
-        }
-
         .team-card:hover { 
           transform: translateY(-8px); 
           border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1); 
-        }
-
-        .team-card:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .team-logo-container { 
@@ -642,17 +594,35 @@ const About = () => {
               </div>
 
               <div style={{ padding: '30px' }}>
-                {selectedTeam.captain && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>Club Leadership</span>
+                {selectedTeam.chairman && (
+                  <div style={{ marginBottom: '18px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>Club Chairman</span>
                     <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.95rem' }}>
-                      Captain: <span style={{ fontWeight: 500, color: '#334155' }}>{selectedTeam.captain}</span>
+                      {selectedTeam.chairman}
+                    </p>
+                  </div>
+                )}
+
+                {selectedTeam.coach && (
+                  <div style={{ marginBottom: '18px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>Team Coach</span>
+                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.95rem' }}>
+                      {selectedTeam.coach}
+                    </p>
+                  </div>
+                )}
+
+                {selectedTeam.captain && (
+                  <div style={{ marginBottom: '18px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>TEAM CAPTAIN</span>
+                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '0.95rem' }}>
+                      <span>{selectedTeam.captain}</span>
                     </p>
                   </div>
                 )}
 
                 {selectedTeam.founded && (
-                  <div style={{ marginBottom: '20px' }}>
+                  <div style={{ marginBottom: '18px' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0c1c8c', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>Established</span>
                     <p style={{ margin: 0, color: '#334155', fontWeight: 500, fontSize: '0.95rem' }}>
                       {selectedTeam.founded}

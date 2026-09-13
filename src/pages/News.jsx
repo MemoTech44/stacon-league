@@ -271,8 +271,7 @@ const News = () => {
           left: 0;
           width: 100%;
           height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
+          
           z-index: 2;
         }
 
@@ -280,10 +279,6 @@ const News = () => {
           transform: translateY(-6px); 
           border-color: #0c1c8c; 
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.12);
-        }
-
-        .featured-hero:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .featured-img { 
@@ -366,8 +361,7 @@ const News = () => {
           left: 0;
           width: 100%;
           height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
+          
           z-index: 2;
         }
 
@@ -375,10 +369,6 @@ const News = () => {
           transform: translateY(-8px); 
           border-color: #0c1c8c; 
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1); 
-        }
-
-        .news-card:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .card-img { 
@@ -634,7 +624,7 @@ const News = () => {
             <div className="header-underline"></div>
             <p className="header-description">
               Welcome to the official news hub of the Stacon League. Stay up to date 
-              dengan live match reports, tactical breakdowns, community updates, and board announcements.
+              with live match reports, tactical breakdowns, community updates, and board announcements.
             </p>
           </header>
 
@@ -667,138 +657,138 @@ const News = () => {
                     </div>
                   </div>
                 </div>
-              )}
+            )}
 
-              <div className="news-grid">
-                {regular.map((article) => (
-                  <div key={article.id} className="news-card" onClick={() => setSelectedArticle(article)}>
-                    <div className="card-img">
-                      <img 
-                        src={getImageUrl(article.imageUrl, article.id)} 
-                        alt={article.title} 
-                        loading="lazy" 
-                      />
-                    </div>
-                    <div className="card-body">
-                      <span className="card-category">{article.category || "General"}</span>
-                      <h3 className="card-title">{article.title}</h3>
-                      <div className="read-more-btn">
-                        READ ARTICLE <ChevronRight size={16} strokeWidth={3}/>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ARTICLE READER MODAL */}
-      {selectedArticle && (
-        <div className="modal-backdrop" onClick={handleBackdropClick}>
-          <div className="modal-container">
-            <button className="close-btn" onClick={() => setSelectedArticle(null)}>
-              <X size={20} color="#0c1c8c" />
-            </button>
-            
-            <div className="modal-scroll">
-              <img 
-                src={getImageUrl(selectedArticle.imageUrl, selectedArticle.id)} 
-                style={{ width: '100%', height: '300px', objectFit: 'cover', objectPosition: 'center 25%' }} 
-                alt={selectedArticle.title} 
-                loading="lazy"
-              />
-              <div style={{ padding: '35px 30px 20px' }}>
-                <div style={{ display: 'flex', gap: '15px', marginBottom: '18px', alignItems: 'center' }}>
-                  <span style={{ background: '#fef9c3', color: '#854d0e', padding: '5px 12px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #fde047', textTransform: 'uppercase' }}>
-                    {selectedArticle.category || 'General'}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={15} className="color-yellow" /> {selectedArticle.date}
-                  </span>
-                </div>
-                
-                <h2 style={{ fontFamily: 'Bebas Neue, cursive', fontSize: '2rem', color: '#0c1c8c', marginBottom: '20px', lineHeight: 1.1, letterSpacing: '0.8px', fontWeight: 400 }}>
-                  {selectedArticle.title}
-                </h2>
-                
-                <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontWeight: 500 }}>
-                  {selectedArticle.content}
-                </div>
-
-                {/* LIKE, COMMENT, SHARE INTERACTION BAR */}
-                <div className="interaction-bar">
-                  <button className="interaction-btn" onClick={handleLike} disabled={isLiking}>
-                    <Heart size={18} fill={selectedArticle.likes > 0 ? "#b91c1c" : "none"} color="#b91c1c" />
-                    <span>{selectedArticle.likes || 0} Likes</span>
-                  </button>
-
-                  <button className="interaction-btn" onClick={() => document.getElementById('comment-input-field')?.focus()}>
-                    <MessageCircle size={18} color="#0c1c8c" />
-                    <span>{selectedArticle.comments?.length || 0} Comments</span>
-                  </button>
-
-                  <button className="interaction-btn" onClick={handleShare}>
-                    <Share2 size={18} color="#0c1c8c" />
-                    <span>Share</span>
-                  </button>
-                </div>
-
-                {/* COMMENTS SECTION */}
-                <div className="comments-section">
-                  <h3 className="comments-title">Discussion</h3>
-                  
-                  <form onSubmit={handleAddComment} className="comment-form">
-                    <input 
-                      id="comment-input-field"
-                      type="text" 
-                      className="comment-input" 
-                      placeholder="Write a comment..." 
-                      value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
+            <div className="news-grid">
+              {regular.map((article) => (
+                <div key={article.id} className="news-card" onClick={() => setSelectedArticle(article)}>
+                  <div className="card-img">
+                    <img 
+                      src={getImageUrl(article.imageUrl, article.id)} 
+                      alt={article.title} 
+                      loading="lazy" 
                     />
-                    <button type="submit" className="comment-submit-btn">
-                      <Send size={16} />
-                    </button>
-                  </form>
-
-                  <div className="comments-list">
-                    {(!selectedArticle.comments || selectedArticle.comments.length === 0) ? (
-                      <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>No comments yet. Be the first to share your thoughts!</p>
-                    ) : (
-                      <>
-                        {(showAllComments 
-                          ? selectedArticle.comments 
-                          : selectedArticle.comments.slice(-1)
-                        ).map((comment) => (
-                          <div key={comment.id} className="comment-item">
-                            {comment.text}
-                          </div>
-                        ))}
-
-                        {selectedArticle.comments.length > 1 && !showAllComments && (
-                          <button className="view-more-comments" onClick={() => setShowAllComments(true)}>
-                            View more comments ({selectedArticle.comments.length - 1} earlier) <ChevronDown size={14} />
-                          </button>
-                        )}
-
-                        {showAllComments && selectedArticle.comments.length > 1 && (
-                          <button className="view-more-comments" onClick={() => setShowAllComments(false)}>
-                            Show less <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} />
-                          </button>
-                        )}
-                      </>
-                    )}
+                  </div>
+                  <div className="card-body">
+                    <span className="card-category">{article.category || "General"}</span>
+                    <h3 className="card-title">{article.title}</h3>
+                    <div className="read-more-btn">
+                      READ ARTICLE <ChevronRight size={16} strokeWidth={3}/>
+                    </div>
                   </div>
                 </div>
+              ))}
+          </div>
+          </>
+        )}
+      </div>
+    </div>
 
+    {/* ARTICLE READER MODAL */}
+    {selectedArticle && (
+      <div className="modal-backdrop" onClick={handleBackdropClick}>
+        <div className="modal-container">
+          <button className="close-btn" onClick={() => setSelectedArticle(null)}>
+            <X size={20} color="#0c1c8c" />
+          </button>
+           
+          <div className="modal-scroll">
+            <img 
+              src={getImageUrl(selectedArticle.imageUrl, selectedArticle.id)} 
+              style={{ width: '100%', height: '300px', objectFit: 'cover', objectPosition: 'center 25%' }} 
+              alt={selectedArticle.title} 
+              loading="lazy"
+            />
+            <div style={{ padding: '35px 30px 20px' }}>
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '18px', alignItems: 'center' }}>
+                <span style={{ background: '#fef9c3', color: '#854d0e', padding: '5px 12px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #fde047', textTransform: 'uppercase' }}>
+                  {selectedArticle.category || 'General'}
+                </span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={15} className="color-yellow" /> {selectedArticle.date}
+                </span>
               </div>
+               
+              <h2 style={{ fontFamily: 'Bebas Neue, cursive', fontSize: '2rem', color: '#0c1c8c', marginBottom: '20px', lineHeight: 1.1, letterSpacing: '0.8px', fontWeight: 400 }}>
+                {selectedArticle.title}
+              </h2>
+               
+              <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.8, whiteSpace: 'pre-wrap', fontWeight: 500 }}>
+                {selectedArticle.content}
+              </div>
+
+              {/* LIKE, COMMENT, SHARE INTERACTION BAR */}
+              <div className="interaction-bar">
+                <button className="interaction-btn" onClick={handleLike} disabled={isLiking}>
+                  <Heart size={18} fill={selectedArticle.likes > 0 ? "#b91c1c" : "none"} color="#b91c1c" />
+                  <span>{selectedArticle.likes || 0} Likes</span>
+                </button>
+
+                <button className="interaction-btn" onClick={() => document.getElementById('comment-input-field')?.focus()}>
+                  <MessageCircle size={18} color="#0c1c8c" />
+                  <span>{selectedArticle.comments?.length || 0} Comments</span>
+                </button>
+
+                <button className="interaction-btn" onClick={handleShare}>
+                  <Share2 size={18} color="#0c1c8c" />
+                  <span>Share</span>
+                </button>
+              </div>
+
+              {/* COMMENTS SECTION */}
+              <div className="comments-section">
+                <h3 className="comments-title">Discussion</h3>
+                 
+                <form onSubmit={handleAddComment} className="comment-form">
+                  <input 
+                    id="comment-input-field"
+                    type="text" 
+                    className="comment-input" 
+                    placeholder="Write a comment..." 
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                  />
+                  <button type="submit" className="comment-submit-btn">
+                    <Send size={16} />
+                  </button>
+                </form>
+
+                <div className="comments-list">
+                  {(!selectedArticle.comments || selectedArticle.comments.length === 0) ? (
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>No comments yet. Be the first to share your thoughts!</p>
+                  ) : (
+                    <>
+                      {(showAllComments 
+                        ? selectedArticle.comments 
+                        : selectedArticle.comments.slice(-1)
+                      ).map((comment) => (
+                        <div key={comment.id} className="comment-item">
+                          {comment.text}
+                        </div>
+                      ))}
+
+                      {selectedArticle.comments.length > 1 && !showAllComments && (
+                        <button className="view-more-comments" onClick={() => setShowAllComments(true)}>
+                          View more comments ({selectedArticle.comments.length - 1} earlier) <ChevronDown size={14} />
+                        </button>
+                      )}
+
+                      {showAllComments && selectedArticle.comments.length > 1 && (
+                        <button className="view-more-comments" onClick={() => setShowAllComments(false)}>
+                          Show less <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
+      </div>
       )}
-    </>
+  </>
   );
 };
 
