@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { Trophy, Loader2, Shield, Sparkles } from 'lucide-react';
+import { Trophy, Loader2, Shield, User, ChevronDown } from 'lucide-react';
 
 import heroImg from '../assets/top.jpg';
 
 const Table = () => {
   const [leagueData, setLeagueData] = useState([]);
+  const [topScorers, setTopScorers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSeason, setSelectedSeason] = useState("Season 2");
+  const [selectedSeason, setSelectedSeason] = useState("Season 7");
 
-  // Capped up to Season 4
-  const seasons = ["Season 1", "Season 2", "Season 3", "Season 4"];
+  // Dynamic seasons list up to Season 7, built to scale for future seasons
+  const seasons = Array.from({ length: 7 }, (_, i) => `Season ${i + 1}`);
 
   useEffect(() => {
     const generateTableData = async () => {
@@ -37,8 +38,8 @@ const Table = () => {
         );
         const fixturesSnapshot = await getDocs(fixturesQuery);
 
-        // Check if any matches have been completed for this season
         const hasSeasonStarted = fixturesSnapshot.docs.length > 0;
+        const scorersMap = {};
 
         fixturesSnapshot.docs.forEach(doc => {
           const match = doc.data();
@@ -69,15 +70,37 @@ const Table = () => {
             home.gd = home.gf - home.ga;
             away.gd = away.gf - away.ga;
           }
+
+          if (match.scorers && Array.isArray(match.scorers)) {
+            match.scorers.forEach(scorer => {
+              const playerName = scorer.name || scorer.playerName;
+              const playerTeam = scorer.team || scorer.club;
+              const playerPhoto = scorer.photoUrl || scorer.photo || null;
+              const goalsScored = Number(scorer.goals || 1);
+
+              if (playerName) {
+                const key = `${playerName}_${playerTeam || ''}`;
+                if (!scorersMap[key]) {
+                  scorersMap[key] = {
+                    name: playerName,
+                    team: playerTeam || 'Unknown',
+                    photo: playerPhoto,
+                    goals: 0
+                  };
+                } else if (playerPhoto && !scorersMap[key].photo) {
+                  scorersMap[key].photo = playerPhoto;
+                }
+                scorersMap[key].goals += goalsScored;
+              }
+            });
+          }
         });
 
         let sortedTeams = Object.values(teamsMap);
 
         if (!hasSeasonStarted) {
-          // Default order: Alphabetical by team name if season hasn't started
           sortedTeams.sort((a, b) => a.name.localeCompare(b.name));
         } else {
-          // Standard league standings sorting order
           sortedTeams.sort((a, b) => {
             if (b.pts !== a.pts) return b.pts - a.pts;
             if (b.gd !== a.gd) return b.gd - a.gd;
@@ -86,6 +109,13 @@ const Table = () => {
         }
 
         setLeagueData(sortedTeams.map((t, i) => ({ ...t, pos: i + 1 })));
+
+        const sortedScorers = Object.values(scorersMap)
+          .sort((a, b) => b.goals - a.goals)
+          .slice(0, 10);
+        
+        setTopScorers(sortedScorers);
+
       } catch (error) {
         console.error("Error calculating table:", error);
       } finally {
@@ -181,43 +211,50 @@ const Table = () => {
           transform: scale(1.05);
         }
 
-        /* Controls / Season Filter Section */
+        /* Scalable Dropdown Filter Section */
         .selector-wrapper { 
           display: flex; 
           justify-content: center; 
           margin-bottom: 40px;
         }
 
-        .season-filter { 
-          display: flex; 
-          gap: 6px; 
-          background: #ffffff; 
-          padding: 8px; 
-          border-radius: 20px; 
-          border: 1px solid #e2e8f0; 
-          box-shadow: 0 10px 25px rgba(12, 28, 140, 0.04); 
+        .dropdown-filter-container {
+          position: relative;
+          display: inline-block;
+          width: 100%;
+          max-width: 280px;
         }
 
-        .season-tab { 
-          padding: 10px 22px; 
-          border-radius: 14px; 
-          border: none; 
-          background: transparent; 
-          cursor: pointer; 
-          font-weight: 800; 
-          color: #64748b; 
-          transition: all 0.3s ease; 
-          font-size: 0.75rem; 
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
+        .season-dropdown {
+          width: 100%;
+          appearance: none;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          padding: 14px 20px;
+          padding-right: 45px;
+          border-radius: 16px;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #0c1c8c;
+          cursor: pointer;
+          box-shadow: 0 10px 25px rgba(12, 28, 140, 0.04);
+          transition: all 0.3s ease;
+          outline: none;
         }
 
-        .season-tab:hover { color: #0c1c8c; }
+        .season-dropdown:hover, .season-dropdown:focus {
+          border-color: #0c1c8c;
+          box-shadow: 0 15px 30px rgba(12, 28, 140, 0.08);
+        }
 
-        .season-tab.active { 
-          background: #0c1c8c; 
-          color: #ffffff; 
-          box-shadow: 0 4px 15px rgba(12, 28, 140, 0.2);
+        .dropdown-icon {
+          position: absolute;
+          right: 18px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #0c1c8c;
+          pointer-events: none;
         }
 
         /* Table Card & Content */
@@ -232,6 +269,7 @@ const Table = () => {
           box-sizing: border-box;
           position: relative;
           transition: all 0.35s ease;
+          margin-bottom: 50px;
         }
 
         .table-card::before {
@@ -249,10 +287,6 @@ const Table = () => {
         .table-card:hover {
           border-color: #0c1c8c;
           box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
-        }
-
-        .table-card:hover::before {
-          background: linear-gradient(90deg, #0c1c8c, #c59b27, #b91c1c);
         }
 
         .table-responsive {
@@ -332,6 +366,62 @@ const Table = () => {
         
         tr.leader td { background: rgba(197, 155, 39, 0.05); }
 
+        /* Centered Section Heading for Top Scorers */
+        .section-heading-container {
+          text-align: center;
+          margin-top: 60px;
+          margin-bottom: 25px;
+        }
+
+        .section-subheading {
+          font-family: 'Bebas Neue', cursive;
+          font-size: clamp(2rem, 4vw, 2.8rem);
+          color: #0c1c8c;
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+
+        .section-underline {
+          width: 60px;
+          height: 3px;
+          margin: 10px auto 0;
+          border-radius: 3px;
+        }
+
+        /* Player Photo Style */
+        .player-cell { display: flex; align-items: center; gap: 12px; text-align: left; }
+        
+        .player-photo-container {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .player-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .player-name-text {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-weight: 700;
+          color: #0f172a;
+          font-size: 0.95rem;
+        }
+
         .legend { 
           display: flex; 
           justify-content: center; 
@@ -356,12 +446,13 @@ const Table = () => {
           .header-box h1 { font-size: 2.6rem; }
           .page-banner { height: 200px; margin-bottom: 35px; }
           
-          .season-filter { padding: 4px; border-radius: 14px; gap: 4px; width: 100%; max-width: 360px; justify-content: space-between; }
-          .season-tab { padding: 6px 10px; font-size: 0.65rem; border-radius: 10px; flex: 1; text-align: center; }
+          .dropdown-filter-container { max-width: 100%; }
+          .season-dropdown { padding: 12px 16px; font-size: 0.9rem; border-radius: 14px; }
 
           .table-card { padding: 15px; }
           .team-name-text { font-size: 0.95rem; }
           .team-logo-container { width: 32px; height: 32px; border-radius: 8px; padding: 4px; }
+          .player-photo-container { width: 32px; height: 32px; }
         }
       `}</style>
 
@@ -385,18 +476,22 @@ const Table = () => {
           />
         </div>
 
-        {/* SEASON SELECTOR CONTROLS */}
+        {/* SCALABLE DROPDOWN SEASON SELECTOR */}
         <div className="selector-wrapper">
-          <div className="season-filter">
-            {seasons.map(s => (
-              <button 
-                key={s} 
-                onClick={() => setSelectedSeason(s)} 
-                className={`season-tab ${selectedSeason === s ? 'active' : ''}`}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="dropdown-filter-container">
+            <select 
+              value={selectedSeason} 
+              onChange={(e) => setSelectedSeason(e.target.value)}
+              className="season-dropdown"
+              aria-label="Select Season"
+            >
+              {seasons.map(s => (
+                <option key={s} value={s}>
+                  {s} {s === "Season 7" ? "(Current)" : ""}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="dropdown-icon" size={20} />
           </div>
         </div>
 
@@ -452,6 +547,65 @@ const Table = () => {
                         {team.gd > 0 ? `+${team.gd}` : team.gd}
                       </td>
                       <td className="w-pts">{team.pts}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* CENTERED TOPSCORERS HEADING */}
+        <div className="section-heading-container">
+          <h2 className="section-subheading">
+            <Trophy size={32} className="color-yellow" />
+            <span>{selectedSeason} <span className="color-yellow">Top Scorers</span></span>
+          </h2>
+          <div className="section-underline"></div>
+        </div>
+
+        {/* TOPSCORERS TABLE */}
+        <div className="table-card">
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <Loader2 className="animate-spin" size={30} color="#0c1c8c" style={{ margin: 'auto' }}/>
+              <p style={{ marginTop: '10px', fontWeight: 800, color: '#0c1c8c', letterSpacing: '2px', fontSize: '0.75rem' }}>
+                LOADING TOP SCORERS...
+              </p>
+            </div>
+          ) : topScorers.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>
+              No goalscorer data recorded for {selectedSeason} yet.
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="w-pos">Rank</th>
+                    <th className="w-team">Player</th>
+                    <th className="w-team">Team</th>
+                    <th className="w-pts">Goals</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topScorers.map((player, index) => (
+                    <tr key={index} className={index === 0 ? 'leader' : ''}>
+                      <td className="w-pos">{index + 1}</td>
+                      <td className="w-team">
+                        <div className="player-cell">
+                          <div className="player-photo-container">
+                            {player.photo ? (
+                              <img src={player.photo} className="player-photo" crossOrigin="anonymous" alt={player.name} />
+                            ) : (
+                              <User size={16} color="#64748b" />
+                            )}
+                          </div>
+                          <span className="player-name-text">{player.name}</span>
+                        </div>
+                      </td>
+                      <td className="w-team" style={{ color: '#64748b', fontWeight: 600 }}>{player.team}</td>
+                      <td className="w-pts" style={{ color: '#0c1c8c' }}>{player.goals}</td>
                     </tr>
                   ))}
                 </tbody>
