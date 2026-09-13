@@ -525,7 +525,7 @@ const Home = () => {
           
           <div className="hero-description-box">
             <p className="hero-description">
-              The STACON League is more than a football championship—it is a celebration of heritage, friendship, achievement, and the enduring bonds forged within the walls of our school. Bringing together alumni from different generations, classes, and eras, the League transforms the beautiful game into a powerful platform for reconnection, healthy rivalry, and lifelong camaraderie.
+              The STACON League is more than a football championship, it is a celebration of heritage, friendship, achievement, and the enduring bonds forged within the walls of Standard College Ntungamo. Bringing together alumni from different generations, classes, and eras, the League transforms the beautiful game into a powerful platform for reconnection, healthy rivalry, and lifelong camaradship.
             </p>
             <div style={{ textAlign: 'center', marginTop: '6px' }}>
               <Link to="/contact" className="sponsor-btn">

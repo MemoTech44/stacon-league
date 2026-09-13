@@ -61,7 +61,6 @@ const Navbar = () => {
           height: 40px;
           border-radius: 10px;
           object-fit: cover;
-          border: 1.5px solid #0c1c8c;
           box-shadow: 0 0 12px rgba(12, 28, 140, 0.15);
           transition: transform 0.3s ease;
         }
