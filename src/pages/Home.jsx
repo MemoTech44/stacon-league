@@ -143,7 +143,7 @@ const Home = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 0.25;
+          opacity: 0.85;
         }
 
         .hero-overlay-gradient {
