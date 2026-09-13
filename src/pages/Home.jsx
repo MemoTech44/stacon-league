@@ -32,8 +32,8 @@ const Home = () => {
 
   // Banner sliding images dataset utilizing different asset options
   const bannerSlides = [
-    { id: 1, image: bachweziImg, caption: "STACON League Action & Intensity" },
-    { id: 2, image: essawaImg, caption: "Essawa Moments & Glory" },
+    
+    { id: 2, image: essawaImg, caption: "Essawa Yoona Moments & Glory" },
     { id: 3, image: embengoImg, caption: "Embengo Heritage & Spirit" },
     { id: 4, image: fallImg, caption: "Championship Glory & Triumphs" },
     { id: 5, image: topImg, caption: "Top Tier Competition & Teams" }
@@ -143,7 +143,7 @@ const Home = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 2.85;
+          opacity: 5.5;
         }
 
         .hero-overlay-gradient {

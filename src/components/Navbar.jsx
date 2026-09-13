@@ -235,7 +235,6 @@ const Navbar = () => {
             left: 0;
             width: 100%;
             height: 3px;
-            background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
           }
 
           @keyframes slideIn {
