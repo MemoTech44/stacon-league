@@ -5,7 +5,7 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  background-color: #020e3f; /* Matches your LayoutWrapper background */
+  background-color: #0c1c8c; /* Matches your LayoutWrapper background */
   color: white;
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
@@ -15,5 +15,5 @@ html, body {
 #root {
   width: 100%;
   min-height: 100vh;
-  background-color: #020617;
+  background-color: #0c1c8c;
 }
