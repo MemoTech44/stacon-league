@@ -18,19 +18,26 @@ const Table = () => {
     const generateTableData = async () => {
       setLoading(true);
       try {
+        // Fetch all clubs
         const clubsSnapshot = await getDocs(collection(db, "clubs"));
         const teamsMap = {};
-        
+        const clubsData = {};
+
         clubsSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          teamsMap[data.name] = {
-            id: doc.id,
-            name: data.name,
-            logo: data.logoUrl || data.logo || null,
-            p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0
-          };
+          const teamName = data.name ? data.name.trim() : '';
+          if (teamName) {
+            clubsData[teamName] = { id: doc.id, ...data };
+            teamsMap[teamName] = {
+              id: doc.id,
+              name: teamName,
+              logo: data.logoUrl || data.logo || null,
+              p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0
+            };
+          }
         });
 
+        // Fetch completed fixtures for the selected season
         const fixturesQuery = query(
           collection(db, "fixtures"),
           where("season", "==", selectedSeason),
@@ -38,83 +45,151 @@ const Table = () => {
         );
         const fixturesSnapshot = await getDocs(fixturesQuery);
 
-        const hasSeasonStarted = fixturesSnapshot.docs.length > 0;
-        const scorersMap = {};
+        let sortedTeamsResult = [];
+        let sortedScorersResult = [];
 
-        fixturesSnapshot.docs.forEach(doc => {
-          const match = doc.data();
-          const home = teamsMap[match.homeTeam];
-          const away = teamsMap[match.awayTeam];
+        if (!fixturesSnapshot.empty) {
+          // ---- Season has real fixture records: compute standings match-by-match ----
+          const scorersMap = {};
 
-          if (home && away) {
-            const hScore = Number(match.homeScore);
-            const aScore = Number(match.awayScore);
+          fixturesSnapshot.docs.forEach(doc => {
+            const match = doc.data();
+            const homeTeamName = match.homeTeam ? match.homeTeam.trim() : '';
+            const awayTeamName = match.awayTeam ? match.awayTeam.trim() : '';
 
-            home.p += 1;
-            away.p += 1;
-            home.gf += hScore;
-            home.ga += aScore;
-            away.gf += aScore;
-            away.ga += hScore;
-
-            if (hScore > aScore) {
-              home.w += 1; home.pts += 3;
-              away.l += 1;
-            } else if (hScore < aScore) {
-              away.w += 1; away.pts += 3;
-              home.l += 1;
-            } else {
-              home.d += 1; home.pts += 1;
-              away.d += 1; away.pts += 1;
-            }
-            home.gd = home.gf - home.ga;
-            away.gd = away.gf - away.ga;
-          }
-
-          if (match.scorers && Array.isArray(match.scorers)) {
-            match.scorers.forEach(scorer => {
-              const playerName = scorer.name || scorer.playerName;
-              const playerTeam = scorer.team || scorer.club;
-              const playerPhoto = scorer.photoUrl || scorer.photo || null;
-              const goalsScored = Number(scorer.goals || 1);
-
-              if (playerName) {
-                const key = `${playerName}_${playerTeam || ''}`;
-                if (!scorersMap[key]) {
-                  scorersMap[key] = {
-                    name: playerName,
-                    team: playerTeam || 'Unknown',
-                    photo: playerPhoto,
-                    goals: 0
-                  };
-                } else if (playerPhoto && !scorersMap[key].photo) {
-                  scorersMap[key].photo = playerPhoto;
-                }
-                scorersMap[key].goals += goalsScored;
+            // Dynamically add teams if they existed in past seasons but aren't in the main 'clubs' collection anymore
+            [homeTeamName, awayTeamName].forEach(teamName => {
+              if (teamName && !teamsMap[teamName]) {
+                teamsMap[teamName] = {
+                  id: teamName,
+                  name: teamName,
+                  logo: null,
+                  p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0
+                };
               }
             });
-          }
-        });
 
-        let sortedTeams = Object.values(teamsMap);
+            const home = teamsMap[homeTeamName];
+            const away = teamsMap[awayTeamName];
 
-        if (!hasSeasonStarted) {
-          sortedTeams.sort((a, b) => a.name.localeCompare(b.name));
-        } else {
+            if (home && away) {
+              const hScore = Number(match.homeScore) || 0;
+              const aScore = Number(match.awayScore) || 0;
+
+              home.p += 1;
+              away.p += 1;
+              home.gf += hScore;
+              home.ga += aScore;
+              away.gf += aScore;
+              away.ga += hScore;
+
+              if (hScore > aScore) {
+                home.w += 1; home.pts += 3;
+                away.l += 1;
+              } else if (hScore < aScore) {
+                away.w += 1; away.pts += 3;
+                home.l += 1;
+              } else {
+                home.d += 1; home.pts += 1;
+                away.d += 1; away.pts += 1;
+              }
+              home.gd = home.gf - home.ga;
+              away.gd = away.gf - away.ga;
+            }
+
+            if (match.scorers && Array.isArray(match.scorers)) {
+              match.scorers.forEach(scorer => {
+                const playerName = scorer.name || scorer.playerName;
+                const playerTeam = scorer.team || scorer.club;
+                const playerPhoto = scorer.photoUrl || scorer.photo || null;
+                const goalsScored = Number(scorer.goals || 1);
+
+                if (playerName) {
+                  const key = `${playerName.trim()}_${playerTeam ? playerTeam.trim() : ''}`;
+                  if (!scorersMap[key]) {
+                    scorersMap[key] = {
+                      name: playerName.trim(),
+                      team: playerTeam ? playerTeam.trim() : 'Unknown',
+                      photo: playerPhoto,
+                      goals: 0
+                    };
+                  } else if (playerPhoto && !scorersMap[key].photo) {
+                    scorersMap[key].photo = playerPhoto;
+                  }
+                  scorersMap[key].goals += goalsScored;
+                }
+              });
+            }
+          });
+
+          let sortedTeams = Object.values(teamsMap).filter(team => team.p > 0 || selectedSeason === "Season 7");
+
           sortedTeams.sort((a, b) => {
             if (b.pts !== a.pts) return b.pts - a.pts;
             if (b.gd !== a.gd) return b.gd - a.gd;
             return b.gf - a.gf;
           });
+
+          sortedTeamsResult = sortedTeams;
+
+          sortedScorersResult = Object.values(scorersMap)
+            .sort((a, b) => b.goals - a.goals)
+            .slice(0, 10);
+
+        } else {
+          // ---- Legacy season: no fixture docs, read stats saved directly on clubs + topScorers ----
+          const legacyTeams = Object.values(clubsData)
+            .map(club => {
+              const seasonStats = club.stats && club.stats[selectedSeason];
+              if (!seasonStats) return null;
+              const gf = Number(seasonStats.gf || 0);
+              const ga = Number(seasonStats.ga || 0);
+              return {
+                id: club.id,
+                name: (club.name || '').trim(),
+                logo: club.logoUrl || club.logo || null,
+                p: Number(seasonStats.played || 0),
+                w: Number(seasonStats.won || 0),
+                d: Number(seasonStats.drawn || 0),
+                l: Number(seasonStats.lost || 0),
+                gf,
+                ga,
+                gd: gf - ga,
+                pts: Number(seasonStats.points || 0),
+                position: seasonStats.position ? Number(seasonStats.position) : null
+              };
+            })
+            .filter(Boolean);
+
+          legacyTeams.sort((a, b) => {
+            if (a.position != null && b.position != null && a.position !== b.position) {
+              return a.position - b.position;
+            }
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            if (b.gd !== a.gd) return b.gd - a.gd;
+            return b.gf - a.gf;
+          });
+
+          sortedTeamsResult = legacyTeams;
+
+          const scorersQuery = query(collection(db, "topScorers"), where("season", "==", selectedSeason));
+          const scorersSnap = await getDocs(scorersQuery);
+          sortedScorersResult = scorersSnap.docs
+            .map(d => {
+              const data = d.data();
+              return {
+                name: data.name,
+                team: data.club || 'Unknown',
+                photo: data.photoUrl || data.photo || null,
+                goals: Number(data.goals || 0)
+              };
+            })
+            .sort((a, b) => b.goals - a.goals)
+            .slice(0, 10);
         }
 
-        setLeagueData(sortedTeams.map((t, i) => ({ ...t, pos: i + 1 })));
-
-        const sortedScorers = Object.values(scorersMap)
-          .sort((a, b) => b.goals - a.goals)
-          .slice(0, 10);
-        
-        setTopScorers(sortedScorers);
+        setLeagueData(sortedTeamsResult.map((t, i) => ({ ...t, pos: i + 1 })));
+        setTopScorers(sortedScorersResult);
 
       } catch (error) {
         console.error("Error calculating table:", error);
@@ -146,7 +221,6 @@ const Table = () => {
         .color-yellow { color: #c59b27; }
         .color-red { color: #b91c1c; }
 
-        /* Header Styling */
         .header-box { text-align: center; margin-bottom: 50px; }
         
         .header-tag {
@@ -187,7 +261,6 @@ const Table = () => {
           font-weight: 500;
         }
 
-        /* Banner Wrapper */
         .page-banner {
           background: #ffffff;
           border-radius: 28px;
@@ -211,7 +284,6 @@ const Table = () => {
           transform: scale(1.05);
         }
 
-        /* Scalable Dropdown Filter Section */
         .selector-wrapper { 
           display: flex; 
           justify-content: center; 
@@ -257,7 +329,6 @@ const Table = () => {
           pointer-events: none;
         }
 
-        /* Table Card & Content */
         .table-card { 
           background: #ffffff; 
           border-radius: 28px; 
@@ -270,23 +341,6 @@ const Table = () => {
           position: relative;
           transition: all 0.35s ease;
           margin-bottom: 50px;
-        }
-
-        .table-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 4px;
-          background: transparent;
-          transition: background 0.3s ease;
-          z-index: 2;
-        }
-
-        .table-card:hover {
-          border-color: #0c1c8c;
-          box-shadow: 0 20px 40px rgba(12, 28, 140, 0.1);
         }
 
         .table-responsive {
@@ -359,14 +413,12 @@ const Table = () => {
           border: 1px solid #e2e8f0;
           flex-shrink: 0;
           padding: 6px;
-          box-shadow: inset 0 0 8px rgba(0,0,0,0.02);
         }
 
         .team-logo { max-width: 100%; max-height: 100%; object-fit: contain; }
         
         tr.leader td { background: rgba(197, 155, 39, 0.05); }
 
-        /* Centered Section Heading for Top Scorers */
         .section-heading-container {
           text-align: center;
           margin-top: 60px;
@@ -391,9 +443,9 @@ const Table = () => {
           height: 3px;
           margin: 10px auto 0;
           border-radius: 3px;
+          background: #c59b27;
         }
 
-        /* Player Photo Style */
         .player-cell { display: flex; align-items: center; gap: 12px; text-align: left; }
         
         .player-photo-container {
@@ -439,25 +491,9 @@ const Table = () => {
         }
 
         .legend b { color: #0c1c8c; }
-
-        @media (max-width: 768px) {
-          .table-page { padding-top: 90px; padding-left: 16px; padding-right: 16px; }
-          .header-box { margin-bottom: 30px; }
-          .header-box h1 { font-size: 2.6rem; }
-          .page-banner { height: 200px; margin-bottom: 35px; }
-          
-          .dropdown-filter-container { max-width: 100%; }
-          .season-dropdown { padding: 12px 16px; font-size: 0.9rem; border-radius: 14px; }
-
-          .table-card { padding: 15px; }
-          .team-name-text { font-size: 0.95rem; }
-          .team-logo-container { width: 32px; height: 32px; border-radius: 8px; padding: 4px; }
-          .player-photo-container { width: 32px; height: 32px; }
-        }
       `}</style>
 
       <div className="container">
-        {/* HEADER SECTION */}
         <header className="header-box">
           <span className="header-tag">League Archives & Statistics</span>
           <h1>LEAGUE <span className="color-yellow">STANDINGS</span></h1>
@@ -467,16 +503,10 @@ const Table = () => {
           </p>
         </header>
 
-        {/* PAGE BANNER */}
         <div className="page-banner">
-          <img 
-            src={heroImg} 
-            alt="Stacon League Standings Action" 
-            loading="lazy"
-          />
+          <img src={heroImg} alt="Stacon League Standings Action" loading="lazy" />
         </div>
 
-        {/* SCALABLE DROPDOWN SEASON SELECTOR */}
         <div className="selector-wrapper">
           <div className="dropdown-filter-container">
             <select 
@@ -495,7 +525,6 @@ const Table = () => {
           </div>
         </div>
 
-        {/* TABLE CARD */}
         <div className="table-card">
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
@@ -503,6 +532,10 @@ const Table = () => {
               <p style={{ marginTop: '15px', fontWeight: 800, color: '#0c1c8c', letterSpacing: '2px', fontSize: '0.8rem' }}>
                 LOADING STANDINGS...
               </p>
+            </div>
+          ) : leagueData.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>
+              No matches or standings recorded for {selectedSeason} yet.
             </div>
           ) : (
             <div className="table-responsive">
@@ -555,7 +588,6 @@ const Table = () => {
           )}
         </div>
 
-        {/* CENTERED TOPSCORERS HEADING */}
         <div className="section-heading-container">
           <h2 className="section-subheading">
             <Trophy size={32} className="color-yellow" />
@@ -564,7 +596,6 @@ const Table = () => {
           <div className="section-underline"></div>
         </div>
 
-        {/* TOPSCORERS TABLE */}
         <div className="table-card">
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -614,7 +645,6 @@ const Table = () => {
           )}
         </div>
 
-        {/* LEGEND FOOTER */}
         <div className="legend">
           <span><b>P</b> Played</span>
           <span><b>W</b> Won</span>
