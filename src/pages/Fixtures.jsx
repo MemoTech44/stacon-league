@@ -790,7 +790,7 @@ const FixturesAndResults = () => {
                   className={`filter-btn ${selectedMatchday === md ? 'active' : ''}`} 
                   onClick={() => setSelectedMatchday(md)}
                 >
-                  {isNaN(md) ? md : `Round ${md}`}
+                  {isNaN(md) ? md : `MATCHDAY ${md}`}
                 </button>
               ))}
             </div>
@@ -822,7 +822,7 @@ const FixturesAndResults = () => {
                 <div key={`${group.season}-${group.matchday}`} className="md-section">
                   <div className="md-header">
                     <span className="md-badge">
-                      {group.season} • {isNaN(group.matchday) ? group.matchday : `Round ${group.matchday}`}
+                      {group.season} • {isNaN(group.matchday) ? group.matchday : `MATCHDAY ${group.matchday}`}
                     </span>
                     <div className="md-meta">
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={15} color="#c59b27"/> {group.venue}</span>
@@ -888,7 +888,7 @@ const FixturesAndResults = () => {
                   <div className="export-header">
                     <span style={{ fontFamily: 'Cinzel', color: '#0c1c8c', fontSize: '0.8rem', letterSpacing: '2px', display: 'block' }}>ST. JEROME LEAGUE</span>
                     <h2 style={{ fontFamily: 'Bebas Neue', fontSize: '2.2rem', color: '#0c1c8c', margin: '2px 0 0 0' }}>
-                      {selectedSeason} {selectedMatchday !== 'All' ? `— Round ${selectedMatchday}` : '— All Results'}
+                      {selectedSeason} {selectedMatchday !== 'All' ? `— MATCHDAY ${selectedMatchday}` : '— All Results'}
                     </h2>
                   </div>
                 )}
@@ -962,7 +962,7 @@ const FixturesAndResults = () => {
                 <div style={{ background: '#f1f5f9', padding: '38px 20px', textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>
                   <div className="match-badge-tag" style={{ marginBottom: '15px' }}>
                     <Calendar size={14} className="color-yellow" />
-                    {selectedFixture.matchday ? `ROUND ${selectedFixture.matchday}`.toUpperCase() : 'LEAGUE MATCH'}
+                    {selectedFixture.matchday ? `MATCHDAY ${selectedFixture.matchday}`.toUpperCase() : 'LEAGUE MATCH'}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', margin: '15px 0' }}>
