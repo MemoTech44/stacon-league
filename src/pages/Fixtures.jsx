@@ -199,11 +199,6 @@ const FixturesAndResults = () => {
     }
   };
 
-  const getStatusClass = (status) => {
-    const s = (status || '').toLowerCase();
-    return (s === 'completed' || s === 'ft') ? 'status-completed' : 'status-upcoming';
-  };
-
   if (loading) return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
       <Loader2 className="animate-spin" size={48} color="#0c1c8c" />
@@ -228,13 +223,13 @@ const FixturesAndResults = () => {
           box-sizing: border-box;
         }
 
-        .container { max-width: 1280px; margin: 0 auto; }
+        .container { max-width: 1180px; margin: 0 auto; }
         
         .color-blue { color: #0c1c8c; }
         .color-yellow { color: #c59b27; }
         .color-red { color: #b91c1c; }
 
-        .header-box { text-align: center; margin-bottom: 40px; }
+        .header-box { text-align: center; margin-bottom: 44px; }
         
         .header-tag {
           font-family: 'Cinzel', serif;
@@ -270,7 +265,7 @@ const FixturesAndResults = () => {
           display: flex;
           justify-content: center;
           gap: 10px;
-          margin-bottom: 35px;
+          margin-bottom: 32px;
           flex-wrap: wrap;
         }
 
@@ -283,7 +278,7 @@ const FixturesAndResults = () => {
           font-size: 0.75rem;
           letter-spacing: 1px;
           font-family: 'Cinzel', serif;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
           background: #ffffff;
           color: #475569;
         }
@@ -308,9 +303,9 @@ const FixturesAndResults = () => {
           justify-content: space-between; 
           align-items: center;
           background: #ffffff; 
-          padding: 18px 22px; 
+          padding: 16px 22px; 
           border-radius: 20px;
-          margin-bottom: 35px; 
+          margin-bottom: 32px; 
           box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04); 
           border: 1px solid #e2e8f0;
         }
@@ -326,7 +321,7 @@ const FixturesAndResults = () => {
           color: #0f172a;
           font-weight: 600; 
           font-family: inherit;
-          transition: all 0.3s ease; 
+          transition: all 0.25s ease; 
           font-size: 0.9rem; 
           box-sizing: border-box;
         }
@@ -348,18 +343,26 @@ const FixturesAndResults = () => {
           color: #0c1c8c; 
         }
 
+        .match-count {
+          font-family: 'Cinzel', serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          color: #64748b;
+        }
+
         /* Results Specific Selectors */
         .results-control-panel {
           background: #ffffff;
-          padding: 24px;
+          padding: 22px;
           border-radius: 24px;
           border: 1px solid #e2e8f0;
           box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
-          margin-bottom: 35px;
+          margin-bottom: 32px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
+          gap: 18px;
         }
 
         .season-selector { 
@@ -379,7 +382,7 @@ const FixturesAndResults = () => {
           cursor: pointer; 
           font-weight: 800; 
           color: #64748b; 
-          transition: all 0.3s ease; 
+          transition: all 0.25s ease; 
           font-size: 0.75rem; 
           letter-spacing: 0.5px;
           font-family: 'Cinzel', serif;
@@ -443,7 +446,7 @@ const FixturesAndResults = () => {
           font-size: 0.75rem;
           font-family: 'Cinzel', serif;
           letter-spacing: 0.5px;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
         }
 
         .download-btn:hover:not(:disabled) {
@@ -459,8 +462,8 @@ const FixturesAndResults = () => {
         }
 
         /* Results / Fixtures Cards Layout (grouped by matchday) */
-        .md-section { margin-bottom: 40px; }
-        .md-header { text-align: center; margin-bottom: 20px; }
+        .md-section { margin-bottom: 36px; }
+        .md-header { text-align: center; margin-bottom: 18px; }
 
         .md-badge { 
           font-family: 'Cinzel', serif;
@@ -489,50 +492,45 @@ const FixturesAndResults = () => {
 
         .match-card {
           background: #ffffff; 
-          border-radius: 18px; 
-          padding: 14px 24px; 
-          margin-bottom: 12px;
+          border-radius: 16px; 
+          padding: 12px 22px; 
+          margin-bottom: 10px;
           display: grid; 
-          grid-template-columns: 1fr 110px 1fr; 
+          grid-template-columns: 1fr 90px 1fr; 
           align-items: center;
           border: 1px solid #e2e8f0; 
-          box-shadow: 0 8px 20px rgba(12, 28, 140, 0.04); 
-          transition: all 0.3s ease;
-          position: relative;
+          box-shadow: 0 6px 16px rgba(12, 28, 140, 0.04); 
+          transition: all 0.25s ease;
         }
 
         .match-card:hover { 
           transform: translateY(-2px); 
           border-color: #0c1c8c; 
-          box-shadow: 0 10px 25px rgba(12, 28, 140, 0.08);
+          box-shadow: 0 10px 22px rgba(12, 28, 140, 0.08);
           cursor: pointer;
         }
 
-        .match-card-status {
-          position: absolute;
-          top: -9px;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        .team { display: flex; align-items: center; gap: 14px; }
+        .team { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .team.home { justify-content: flex-end; text-align: right; }
         .team.away { justify-content: flex-start; text-align: left; }
         
         .team-name { 
           font-family: 'Bebas Neue', cursive;
-          font-size: 1.2rem; 
+          font-size: 1.1rem; 
           color: #0f172a; 
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .logo-frame { 
-          width: 40px; 
-          height: 40px; 
+          width: 30px; 
+          height: 30px; 
           background: #f8fafc; 
-          border-radius: 12px; 
-          padding: 5px; 
+          border-radius: 9px; 
+          padding: 4px; 
           display: flex; 
           align-items: center; 
           justify-content: center; 
@@ -555,7 +553,7 @@ const FixturesAndResults = () => {
 
         .score-val { 
           font-family: 'Bebas Neue', cursive;
-          font-size: 1.4rem; 
+          font-size: 1.3rem; 
           color: #0c1c8c; 
           letter-spacing: 0.8px; 
           line-height: 1;
@@ -576,20 +574,6 @@ const FixturesAndResults = () => {
           margin-bottom: 15px;
           border-bottom: 1px solid #e2e8f0;
         }
-
-        .status-badge {
-          display: inline-block;
-          padding: 4px 10px;
-          border-radius: 6px;
-          font-size: 0.6rem;
-          font-family: 'Cinzel', serif;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          border: 1px solid #ffffff;
-        }
-        .status-upcoming { background: rgba(12, 28, 140, 0.9); color: #ffffff; }
-        .status-completed { background: rgba(21, 128, 61, 0.9); color: #ffffff; }
 
         .empty-state {
           text-align: center;
@@ -617,9 +601,9 @@ const FixturesAndResults = () => {
           background: #ffffff; 
           color: #0f172a;
           width: 100%; 
-          max-width: 520px; 
+          max-width: 480px; 
           max-height: 85vh; 
-          border-radius: 28px; 
+          border-radius: 26px; 
           overflow: hidden; 
           position: relative; 
           display: flex; 
@@ -630,7 +614,7 @@ const FixturesAndResults = () => {
         
         .modal-scroll { 
           overflow-y: auto; 
-          padding-bottom: 40px;
+          padding-bottom: 36px;
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
@@ -639,13 +623,13 @@ const FixturesAndResults = () => {
 
         .close-btn {
           position: absolute;
-          top: 18px;
-          right: 18px;
+          top: 16px;
+          right: 16px;
           background: rgba(255, 255, 255, 0.9);
           border: 1px solid #e2e8f0;
           border-radius: 50%;
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           z-index: 10;
           cursor: pointer;
           display: flex;
@@ -661,12 +645,12 @@ const FixturesAndResults = () => {
 
         .match-badge-tag { 
           color: #0c1c8c; 
-          font-size: 0.75rem; 
+          font-size: 0.72rem; 
           font-weight: 800; 
           text-transform: uppercase; 
           letter-spacing: 1px;
           background: #f8fafc; 
-          padding: 8px 18px;
+          padding: 7px 16px;
           border-radius: 50px;
           display: inline-flex;
           align-items: center;
@@ -687,12 +671,45 @@ const FixturesAndResults = () => {
           background: #c59b27;
         }
 
+        .modal-info-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+
+        .modal-info-card {
+          background: #f8fafc;
+          padding: 14px;
+          border-radius: 14px;
+          border: 1px solid #e2e8f0;
+        }
+
+        .modal-info-label {
+          display: block;
+          font-size: 0.65rem;
+          font-family: 'Cinzel', serif;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .modal-info-value {
+          font-size: 0.82rem;
+          color: #0c1c8c;
+          display: block;
+          font-weight: 700;
+          text-transform: uppercase;
+          margin-top: 3px;
+        }
+
         @media (max-width: 900px) {
           .fixtures-results-page { padding-top: 100px; padding-left: 16px; padding-right: 16px; }
           .controls-bar { flex-direction: column; align-items: stretch; gap: 12px; }
           .search-box { width: 100%; }
-          .match-card { grid-template-columns: 1fr 70px 1fr; padding: 12px; }
-          .team-name { font-size: 0.9rem; }
+          .match-card { grid-template-columns: 1fr 60px 1fr; padding: 10px 12px; }
+          .team-name { font-size: 0.85rem; }
+          .logo-frame { width: 26px; height: 26px; }
           .season-selector { width: 100%; justify-content: space-between; overflow-x: auto; }
           .season-pill { padding: 8px 12px; font-size: 0.65rem; }
         }
@@ -739,7 +756,7 @@ const FixturesAndResults = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>
+            <div className="match-count">
               Showing {filteredFixtures.length} matches
             </div>
           </div>
@@ -815,10 +832,6 @@ const FixturesAndResults = () => {
 
                   {group.matches.map(fixture => (
                     <div key={fixture.id} className="match-card" onClick={() => setSelectedFixture(fixture)}>
-                      <span className={`status-badge match-card-status ${getStatusClass(fixture.status)}`}>
-                        {fixture.status}
-                      </span>
-
                       {/* HOME */}
                       <div className="team home">
                         <span className="team-name">{fixture.homeTeam}</span>
@@ -946,62 +959,51 @@ const FixturesAndResults = () => {
               </button>
 
               <div className="modal-scroll">
-                <div style={{ background: '#f1f5f9', padding: '40px 20px', textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>
+                <div style={{ background: '#f1f5f9', padding: '38px 20px', textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>
                   <div className="match-badge-tag" style={{ marginBottom: '15px' }}>
                     <Calendar size={14} className="color-yellow" />
                     {selectedFixture.matchday ? `ROUND ${selectedFixture.matchday}`.toUpperCase() : 'LEAGUE MATCH'}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', margin: '15px 0' }}>
-                    <div style={{ textAlign: 'center', width: '110px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', margin: '15px 0' }}>
+                    <div style={{ textAlign: 'center', width: '100px' }}>
                       <img 
                         src={selectedFixture.homeLogo || teamLogos[selectedFixture.homeTeam] || `https://ui-avatars.com/api/?name=${selectedFixture.homeTeam}&background=f1f5f9&color=0c1c8c`} 
-                        style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
+                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
                         alt={selectedFixture.homeTeam} 
                       />
-                      <b style={{ fontSize: '0.85rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.homeTeam}</b>
+                      <b style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.homeTeam}</b>
                     </div>
 
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: '2.2rem', color: '#0c1c8c', letterSpacing: '1px' }}>
+                    <div style={{ fontFamily: 'Bebas Neue', fontSize: '2.1rem', color: '#0c1c8c', letterSpacing: '1px' }}>
                       {selectedFixture.homeScore !== null && selectedFixture.awayScore !== null 
                         ? `${selectedFixture.homeScore} - ${selectedFixture.awayScore}` 
                         : 'VS'}
                     </div>
 
-                    <div style={{ textAlign: 'center', width: '110px' }}>
+                    <div style={{ textAlign: 'center', width: '100px' }}>
                       <img 
                         src={selectedFixture.awayLogo || teamLogos[selectedFixture.awayTeam] || `https://ui-avatars.com/api/?name=${selectedFixture.awayTeam}&background=f1f5f9&color=0c1c8c`} 
-                        style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
+                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
                         alt={selectedFixture.awayTeam} 
                       />
-                      <b style={{ fontSize: '0.85rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.awayTeam}</b>
+                      <b style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.awayTeam}</b>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ padding: '30px' }}>
-                  <div style={{ marginBottom: '25px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#c59b27', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px', fontFamily: 'Cinzel, serif' }}>Match Status</span>
-                    <p style={{ margin: 0, color: '#0f172a', fontWeight: 700, fontSize: '1.1rem', textTransform: 'uppercase' }}>
-                      {selectedFixture.status} ({selectedFixture.season || 'Season 2'})
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
-                    <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                      <Clock size={18} color="#0c1c8c" style={{ marginBottom: '6px' }} />
-                      <span style={{ display: 'block', fontSize: '0.7rem', fontFamily: 'Cinzel, serif', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>Date & Time</span>
-                      <b style={{ fontSize: '0.85rem', color: '#0c1c8c', display: 'block', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>
-                        {selectedFixture.date} • {selectedFixture.time}
-                      </b>
+                <div style={{ padding: '28px 30px' }}>
+                  <div className="modal-info-grid">
+                    <div className="modal-info-card">
+                      <Clock size={17} color="#0c1c8c" style={{ marginBottom: '6px' }} />
+                      <span className="modal-info-label">Date & Time</span>
+                      <b className="modal-info-value">{selectedFixture.date} • {selectedFixture.time}</b>
                     </div>
                     
-                    <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                      <MapPin size={18} color="#0c1c8c" style={{ marginBottom: '6px' }} />
-                      <span style={{ display: 'block', fontSize: '0.7rem', fontFamily: 'Cinzel, serif', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>Venue</span>
-                      <b style={{ fontSize: '0.85rem', color: '#0c1c8c', display: 'block', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>
-                        {selectedFixture.venue}
-                      </b>
+                    <div className="modal-info-card">
+                      <MapPin size={17} color="#0c1c8c" style={{ marginBottom: '6px' }} />
+                      <span className="modal-info-label">Venue</span>
+                      <b className="modal-info-value">{selectedFixture.venue}</b>
                     </div>
                   </div>
                 </div>
