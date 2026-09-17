@@ -182,7 +182,7 @@ const FixturesAndResults = () => {
       });
 
       const link = document.createElement('a');
-      link.download = `St-Jerome-${selectedSeason}-MD${selectedMatchday}.jpg`;
+      link.download = `Stacon ${selectedSeason}-MD${selectedMatchday}.jpg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -790,7 +790,7 @@ const FixturesAndResults = () => {
                   className={`filter-btn ${selectedMatchday === md ? 'active' : ''}`} 
                   onClick={() => setSelectedMatchday(md)}
                 >
-                  {isNaN(md) ? md : `MATCHDAY ${md}`}
+                  {isNaN(md) ? md : `GAMEWEEK ${md}`}
                 </button>
               ))}
             </div>
@@ -822,7 +822,7 @@ const FixturesAndResults = () => {
                 <div key={`${group.season}-${group.matchday}`} className="md-section">
                   <div className="md-header">
                     <span className="md-badge">
-                      {group.season} • {isNaN(group.matchday) ? group.matchday : `MATCHDAY ${group.matchday}`}
+                      {group.season} • {isNaN(group.matchday) ? group.matchday : `GAMEWEEK ${group.matchday}`}
                     </span>
                     <div className="md-meta">
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={15} color="#c59b27"/> {group.venue}</span>
