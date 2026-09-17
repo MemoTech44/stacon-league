@@ -103,7 +103,7 @@ const FixturesAndResults = () => {
     return mdays;
   }, [fixtures, selectedSeason]);
 
-  // Filter logic for Upcoming / All Fixtures table view
+  // Filter logic for Upcoming / All Fixtures view
   const filteredFixtures = useMemo(() => {
     let result = fixtures;
     if (activeTab === 'upcoming') {
@@ -121,6 +121,31 @@ const FixturesAndResults = () => {
     }
     return result;
   }, [searchTerm, activeTab, fixtures]);
+
+  // Group the All Fixtures / Upcoming list by Season + Matchday so venue & date
+  // are shown once per group instead of being repeated on every single match row
+  const groupedFixtures = useMemo(() => {
+    const groups = {};
+    filteredFixtures.forEach(f => {
+      const key = `${f.season}||${f.matchday}`;
+      if (!groups[key]) {
+        groups[key] = { season: f.season, matchday: f.matchday, venue: f.venue, date: f.date, matches: [] };
+      }
+      groups[key].matches.push(f);
+    });
+
+    return Object.values(groups).sort((a, b) => {
+      // Most recent date first, then by matchday number/label
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      const numA = Number(a.matchday);
+      const numB = Number(b.matchday);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a.matchday).localeCompare(String(b.matchday));
+    }).map(group => ({
+      ...group,
+      matches: group.matches.sort((m1, m2) => (m1.time || '').localeCompare(m2.time || ''))
+    }));
+  }, [filteredFixtures]);
 
   // Filter logic for Results View grouped by matchday
   const resultsData = useMemo(() => {
@@ -172,6 +197,11 @@ const FixturesAndResults = () => {
     if (e.target.classList.contains('modal-backdrop')) {
       setSelectedFixture(null);
     }
+  };
+
+  const getStatusClass = (status) => {
+    const s = (status || '').toLowerCase();
+    return (s === 'completed' || s === 'ft') ? 'status-completed' : 'status-upcoming';
   };
 
   if (loading) return (
@@ -424,79 +454,11 @@ const FixturesAndResults = () => {
 
         .download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Table Styling for Fixtures/Upcoming */
         .table-wrapper { 
-          background: #ffffff; 
-          border-radius: 24px; 
-          overflow: hidden; 
-          box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04); 
-          border: 1px solid #e2e8f0; 
+          background: transparent;
         }
 
-        table { width: 100%; border-collapse: collapse; }
-
-        th { 
-          padding: 22px 20px; 
-          font-size: 0.75rem; 
-          text-transform: uppercase; 
-          letter-spacing: 1.5px; 
-          font-weight: 700; 
-          font-family: 'Cinzel', serif;
-          color: #0c1c8c; 
-          background: #f8fafc; 
-          text-align: left; 
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        td { 
-          padding: 18px 20px; 
-          border-bottom: 1px solid #f1f5f9; 
-          font-weight: 600; 
-          color: #334155; 
-          transition: background 0.2s ease; 
-        }
-
-        tr:hover td { 
-          background: rgba(12, 28, 140, 0.02); 
-          cursor: pointer; 
-        }
-
-        .fixture-teams { display: flex; align-items: center; gap: 14px; font-weight: 700; color: #0f172a; text-transform: uppercase; }
-
-        .row-avatar { 
-          width: 40px; 
-          height: 40px; 
-          border-radius: 50%; 
-          object-fit: cover; 
-          background: #f1f5f9; 
-          border: 2px solid #e2e8f0; 
-        }
-
-        .score-pill {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          padding: 6px 14px;
-          border-radius: 12px;
-          font-family: 'Bebas Neue', cursive;
-          font-size: 1.2rem;
-          letter-spacing: 1px;
-          color: #0c1c8c;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 4px 10px;
-          border-radius: 6px;
-          font-size: 0.65rem;
-          font-family: 'Cinzel', serif;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .status-upcoming { background: rgba(12, 28, 140, 0.08); color: #0c1c8c; }
-        .status-completed { background: rgba(34, 197, 94, 0.1); color: #15803d; }
-
-        /* Results Cards Layout (Archive View) */
+        /* Results / Fixtures Cards Layout (grouped by matchday) */
         .md-section { margin-bottom: 40px; }
         .md-header { text-align: center; margin-bottom: 20px; }
 
@@ -522,6 +484,7 @@ const FixturesAndResults = () => {
           color: #475569; 
           font-weight: 600; 
           font-size: 0.85rem; 
+          flex-wrap: wrap;
         }
 
         .match-card {
@@ -535,6 +498,7 @@ const FixturesAndResults = () => {
           border: 1px solid #e2e8f0; 
           box-shadow: 0 8px 20px rgba(12, 28, 140, 0.04); 
           transition: all 0.3s ease;
+          position: relative;
         }
 
         .match-card:hover { 
@@ -542,6 +506,13 @@ const FixturesAndResults = () => {
           border-color: #0c1c8c; 
           box-shadow: 0 10px 25px rgba(12, 28, 140, 0.08);
           cursor: pointer;
+        }
+
+        .match-card-status {
+          position: absolute;
+          top: -9px;
+          left: 50%;
+          transform: translateX(-50%);
         }
 
         .team { display: flex; align-items: center; gap: 14px; }
@@ -604,6 +575,29 @@ const FixturesAndResults = () => {
           padding-bottom: 20px;
           margin-bottom: 15px;
           border-bottom: 1px solid #e2e8f0;
+        }
+
+        .status-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 0.6rem;
+          font-family: 'Cinzel', serif;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border: 1px solid #ffffff;
+        }
+        .status-upcoming { background: rgba(12, 28, 140, 0.9); color: #ffffff; }
+        .status-completed { background: rgba(21, 128, 61, 0.9); color: #ffffff; }
+
+        .empty-state {
+          text-align: center;
+          padding: 80px 20px;
+          background: #ffffff;
+          border-radius: 24px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
         }
 
         /* Modal Styling */
@@ -697,8 +691,6 @@ const FixturesAndResults = () => {
           .fixtures-results-page { padding-top: 100px; padding-left: 16px; padding-right: 16px; }
           .controls-bar { flex-direction: column; align-items: stretch; gap: 12px; }
           .search-box { width: 100%; }
-          .hide-on-mobile { display: none; }
-          td { padding: 14px; }
           .match-card { grid-template-columns: 1fr 70px 1fr; padding: 12px; }
           .team-name { font-size: 0.9rem; }
           .season-selector { width: 100%; justify-content: space-between; overflow-x: auto; }
@@ -797,11 +789,11 @@ const FixturesAndResults = () => {
           </div>
         )}
 
-        {/* DISPLAY: FIXTURES / UPCOMING TABLE */}
+        {/* DISPLAY: ALL FIXTURES / UPCOMING — grouped by matchday, venue & date shown once per group */}
         {activeTab !== 'results' ? (
           <div className="table-wrapper">
-            {filteredFixtures.length === 0 ? (
-              <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+            {groupedFixtures.length === 0 ? (
+              <div className="empty-state">
                 <CalendarX size={56} color="#0c1c8c" style={{ margin: '0 auto 15px' }} />
                 <h3 style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: '#0c1c8c', margin: '0 0 5px 0' }}>
                   No Matches Found
@@ -809,80 +801,70 @@ const FixturesAndResults = () => {
                 <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>Try searching with different team names or filters.</p>
               </div>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Match Details</th>
-                    <th>Teams</th>
-                    <th className="hide-on-mobile" style={{ textAlign: 'center' }}>Score</th>
-                    <th className="hide-on-mobile">Venue</th>
-                    <th className="hide-on-mobile" style={{ textAlign: 'center' }}>Status</th>
-                    <th className="hide-on-mobile" style={{ textAlign: 'center' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFixtures.map(fixture => (
-                    <tr key={fixture.id} onClick={() => setSelectedFixture(fixture)}>
-                      <td>
-                        <div style={{ fontSize: '0.75rem', fontFamily: 'Cinzel, serif', fontWeight: 700, color: '#c59b27', marginBottom: '2px' }}>
-                          {fixture.matchday ? `ROUND ${fixture.matchday}`.toUpperCase() : 'LEAGUE MATCH'}
+              groupedFixtures.map(group => (
+                <div key={`${group.season}-${group.matchday}`} className="md-section">
+                  <div className="md-header">
+                    <span className="md-badge">
+                      {group.season} • {isNaN(group.matchday) ? group.matchday : `Round ${group.matchday}`}
+                    </span>
+                    <div className="md-meta">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={15} color="#c59b27"/> {group.venue}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={15} color="#c59b27"/> {group.date}</span>
+                    </div>
+                  </div>
+
+                  {group.matches.map(fixture => (
+                    <div key={fixture.id} className="match-card" onClick={() => setSelectedFixture(fixture)}>
+                      <span className={`status-badge match-card-status ${getStatusClass(fixture.status)}`}>
+                        {fixture.status}
+                      </span>
+
+                      {/* HOME */}
+                      <div className="team home">
+                        <span className="team-name">{fixture.homeTeam}</span>
+                        <div className="logo-frame">
+                          <img 
+                            src={fixture.homeLogo || teamLogos[fixture.homeTeam] || `https://ui-avatars.com/api/?name=${fixture.homeTeam}&background=f8fafc&color=0c1c8c`} 
+                            crossOrigin="anonymous"
+                            alt={fixture.homeTeam} 
+                            className="logo-img" 
+                          />
                         </div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>
-                          {fixture.date} • {fixture.time}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="fixture-teams">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img 
-                              src={fixture.homeLogo || teamLogos[fixture.homeTeam] || `https://ui-avatars.com/api/?name=${fixture.homeTeam}&background=f1f5f9&color=0c1c8c`} 
-                              className="row-avatar" 
-                              alt={fixture.homeTeam} 
-                            />
-                            <span style={{ fontSize: '0.85rem' }}>{fixture.homeTeam.toUpperCase()}</span>
-                          </div>
-                          <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.8rem', margin: '0 4px' }}>VS</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img 
-                              src={fixture.awayLogo || teamLogos[fixture.awayTeam] || `https://ui-avatars.com/api/?name=${fixture.awayTeam}&background=f1f5f9&color=0c1c8c`} 
-                              className="row-avatar" 
-                              alt={fixture.awayTeam} 
-                            />
-                            <span style={{ fontSize: '0.85rem' }}>{fixture.awayTeam.toUpperCase()}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="hide-on-mobile" style={{ textAlign: 'center' }}>
-                        <span className="score-pill">
-                          {fixture.homeScore !== null && fixture.awayScore !== null 
-                            ? `${fixture.homeScore} - ${fixture.awayScore}` 
+                      </div>
+
+                      {/* SCORE / TIME DIVIDER */}
+                      <div className="center-divider">
+                        <span className="ft-tag">{fixture.time}</span>
+                        <span className="score-val">
+                          {fixture.homeScore !== null && fixture.awayScore !== null
+                            ? `${fixture.homeScore} - ${fixture.awayScore}`
                             : 'VS'}
                         </span>
-                      </td>
-                      <td className="hide-on-mobile" style={{ color: '#475569', textTransform: 'uppercase', fontSize: '0.85rem' }}>
-                        {fixture.venue.toUpperCase()}
-                      </td>
-                      <td className="hide-on-mobile" style={{ textAlign: 'center' }}>
-                        <span className={`status-badge ${fixture.status.toLowerCase() === 'completed' || fixture.status.toLowerCase() === 'ft' ? 'status-completed' : 'status-upcoming'}`}>
-                          {fixture.status}
-                        </span>
-                      </td>
-                      <td className="hide-on-mobile" style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#0c1c8c', display: 'flex', justifyContent: 'center' }}>
-                          <ChevronRight size={18} strokeWidth={3} />
+                      </div>
+
+                      {/* AWAY */}
+                      <div className="team away">
+                        <div className="logo-frame">
+                          <img 
+                            src={fixture.awayLogo || teamLogos[fixture.awayTeam] || `https://ui-avatars.com/api/?name=${fixture.awayTeam}&background=f8fafc&color=0c1c8c`} 
+                            crossOrigin="anonymous"
+                            alt={fixture.awayTeam} 
+                            className="logo-img" 
+                          />
                         </div>
-                      </td>
-                    </tr>
+                        <span className="team-name">{fixture.awayTeam}</span>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              ))
             )}
           </div>
         ) : (
           /* DISPLAY: RESULTS ARCHIVE VIEW */
           <div>
             {resultsData.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px', background: '#ffffff', borderRadius: '32px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(12, 28, 140, 0.04)' }}>
+              <div className="empty-state">
                 <Trophy size={48} className="color-yellow" style={{ marginBottom: '15px' }}/>
                 <h3 style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: '#0c1c8c', margin: '0 0 5px 0' }}>No Records Found</h3>
                 <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>No completed results recorded for {selectedSeason}.</p>
