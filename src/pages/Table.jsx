@@ -53,7 +53,7 @@ const Table = () => {
           }
         });
 
-        // FIX: Match completed fixtures case-insensitively
+        // Match completed fixtures case-insensitively
         const fixturesQuery = query(
           collection(db, "fixtures"),
           where("season", "==", selectedSeason)
@@ -119,7 +119,6 @@ const Table = () => {
 
             if (match.scorers && Array.isArray(match.scorers)) {
               match.scorers.forEach(scorer => {
-                // FIX: Handle both old format (scorer.name) and new format
                 const playerName = scorer.name || scorer.playerName || scorer.playerId;
                 const playerTeam = scorer.team || scorer.club;
                 const playerPhoto = scorer.photoUrl || scorer.photo || null;
@@ -143,22 +142,14 @@ const Table = () => {
             }
           });
 
-          // FIX: When no results yet for the current season, show all clubs alphabetically.
-          // When results exist, show teams that have played (+ all registered teams for current season).
           let sortedTeams = Object.values(teamsMap).filter(team =>
             team.p > 0 || selectedSeason === currentSeason
           );
 
-          // FIX: Sort alphabetically first, then by points/GD/GF so teams with
-          // equal stats (0 pts, 0 played) appear in a clean A-Z order
           sortedTeams.sort((a, b) => {
-            // Primary: points descending
             if (b.pts !== a.pts) return b.pts - a.pts;
-            // Secondary: goal difference descending
             if (b.gd !== a.gd) return b.gd - a.gd;
-            // Tertiary: goals for descending
             if (b.gf !== a.gf) return b.gf - a.gf;
-            // Final tiebreaker: alphabetical by name (so 0-0-0 teams sort nicely)
             return a.name.localeCompare(b.name);
           });
 
@@ -169,7 +160,6 @@ const Table = () => {
             .slice(0, 10);
 
         } else {
-          // No completed fixture docs — check for legacy stats on clubs
           const legacyTeams = Object.values(clubsData)
             .map(club => {
               const seasonStats = club.stats && club.stats[selectedSeason];
@@ -194,7 +184,6 @@ const Table = () => {
             .filter(Boolean);
 
           if (legacyTeams.length > 0) {
-            // Legacy season: sort by saved position, then pts, then alphabetical
             legacyTeams.sort((a, b) => {
               if (a.position != null && b.position != null && a.position !== b.position) {
                 return a.position - b.position;
@@ -205,14 +194,12 @@ const Table = () => {
             });
             sortedTeamsResult = legacyTeams;
           } else {
-            // Completely new season with no data yet: show all registered clubs alphabetically
             const allClubs = Object.values(teamsMap)
               .sort((a, b) => a.name.localeCompare(b.name))
               .map(t => ({ ...t }));
             sortedTeamsResult = allClubs;
           }
 
-          // Top scorers from dedicated collection
           const scorersQuery = query(collection(db, "topScorers"), where("season", "==", selectedSeason));
           const scorersSnap = await getDocs(scorersQuery);
           sortedScorersResult = scorersSnap.docs
@@ -544,6 +531,25 @@ const Table = () => {
           font-weight: 600;
           margin-bottom: 18px;
         }
+
+        /* Mobile Optimization: Hide Logos & Photos on screens smaller than 768px */
+        @media (max-width: 768px) {
+          .table-card {
+            padding: 16px 12px;
+            border-radius: 20px;
+          }
+          .team-logo-container,
+          .player-photo-container {
+            display: none !important;
+          }
+          th, td {
+            padding: 10px 6px;
+            font-size: 0.78rem;
+          }
+          table {
+            min-width: 520px;
+          }
+        }
       `}</style>
 
       <div className="container">
@@ -592,7 +598,6 @@ const Table = () => {
             </div>
           ) : (
             <>
-              {/* Show a banner when no results have been played yet */}
               {leagueData.every(t => t.p === 0) && (
                 <div className="no-results-banner">
                   Season hasn't kicked off yet — teams listed alphabetically. Table updates automatically once results are recorded.
