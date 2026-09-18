@@ -3,8 +3,10 @@ import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+
+import logoImg from '../assets/logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -71,7 +73,10 @@ const Login = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #0c1c8c;
+          background-color: #f8fafc;
+          background-image: 
+            radial-gradient(circle at 15% 20%, rgba(243, 231, 63, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 85% 80%, rgba(203, 213, 225, 0.4) 0%, transparent 50%);
           font-family: 'Plus Jakarta Sans', sans-serif;
           padding: 40px 20px;
           box-sizing: border-box;
@@ -86,43 +91,61 @@ const Login = () => {
           left: 0;
           width: 100%;
           height: 4px;
-          background: linear-gradient(90deg, #0c1c8c, #d97706, #0c1c8c);
+          background: linear-gradient(90deg, #cbd5e1, #f3e73f, #cbd5e1);
         }
 
         .login-card {
-          background: rgba(12, 28, 140, 0.45);
-          backdrop-filter: blur(16px);
+          background: #ffffff;
           width: 100%;
           max-width: 440px;
-          border-radius: 24px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 28px;
+          box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+          border: 1px solid #e2e8f0;
           overflow: hidden;
         }
 
         .login-header {
           padding: 40px 30px 20px;
           text-align: center;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .logo-container {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f8fafc;
+          border-radius: 18px;
+          border: 1px solid #e2e8f0;
+          padding: 10px;
+        }
+
+        .login-logo {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
         }
 
         .header-tag {
           font-family: 'Cinzel', serif;
-          color: #d97706;
+          color: #b5a70f;
           font-size: 0.75rem;
           font-weight: 700;
-          letter-spacing: 2px;
+          letter-spacing: 2.5px;
           text-transform: uppercase;
           display: block;
-          margin-top: 12px;
+          margin-bottom: 6px;
         }
 
         .login-header h2 {
           font-family: 'Bebas Neue', cursive;
-          font-size: 2.4rem;
-          color: #ffffff;
+          font-size: 2.5rem;
+          color: #0f172a;
           letter-spacing: 1.5px;
-          margin: 4px 0 0;
+          margin: 0;
           line-height: 1;
         }
 
@@ -139,7 +162,7 @@ const Login = () => {
           font-family: 'Cinzel', serif;
           font-size: 0.7rem;
           font-weight: 700;
-          color: #d97706;
+          color: #334155;
           margin-bottom: 8px;
           text-transform: uppercase;
           letter-spacing: 1px;
@@ -153,73 +176,78 @@ const Login = () => {
 
         .input-wrapper svg {
           position: absolute;
-          left: 14px;
-          color: #94a3b8;
+          left: 16px;
+          color: #64748b;
           transition: color 0.3s ease;
         }
 
         .c-input {
           width: 100%;
-          background: rgba(4, 6, 13, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          padding: 14px 14px 14px 44px;
-          border-radius: 12px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 15px 16px 15px 48px;
+          border-radius: 14px;
           font-family: 'Plus Jakarta Sans', sans-serif;
           font-weight: 600;
           font-size: 0.95rem;
           outline: none;
           transition: all 0.3s ease;
-          color: #ffffff;
+          color: #0f172a;
           box-sizing: border-box;
         }
 
+        .c-input::placeholder {
+          color: #94a3b8;
+        }
+
         .c-input:focus {
-          border-color: #d97706;
-          background: rgba(4, 6, 13, 0.8);
-          box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+          border-color: #f3e73f;
+          background: #ffffff;
+          box-shadow: 0 0 15px rgba(243, 231, 63, 0.25);
         }
 
         .c-input:focus + svg,
         .input-wrapper:focus-within svg {
-          color: #d97706;
+          color: #b5a70f;
         }
 
         .error-msg {
-          background: rgba(220, 38, 38, 0.15);
-          color: #f87171;
+          background: rgba(220, 38, 38, 0.1);
+          color: #dc2626;
           padding: 12px 16px;
-          border-radius: 10px;
+          border-radius: 12px;
           font-size: 0.85rem;
           font-weight: 600;
-          margin-bottom: 20px;
-          border: 1px solid rgba(220, 38, 38, 0.3);
+          margin-bottom: 22px;
+          border: 1px solid rgba(220, 38, 38, 0.2);
           text-align: center;
         }
 
         .login-btn {
           width: 100%;
           padding: 16px;
-          background: #d97706;
-          color: #ffffff;
+          background: linear-gradient(135deg, #f3e73f, #e5d828);
+          color: #0f172a;
           border: none;
-          border-radius: 12px;
+          border-radius: 14px;
           font-family: 'Plus Jakarta Sans', sans-serif;
           font-weight: 800;
           font-size: 0.85rem;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 1.2px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
           transition: all 0.3s ease;
+          box-shadow: 0 6px 20px rgba(243, 231, 63, 0.3);
         }
 
         .login-btn:hover:not(:disabled) {
-          background: #b45309;
+          background: linear-gradient(135deg, #fff045, #f3e73f);
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+          box-shadow: 0 10px 25px rgba(243, 231, 63, 0.4);
         }
 
         .login-btn:disabled {
@@ -231,8 +259,8 @@ const Login = () => {
           display: inline-block;
           width: 100%;
           text-align: center;
-          margin-top: 22px;
-          color: #94a3b8;
+          margin-top: 24px;
+          color: #64748b;
           text-decoration: none;
           font-size: 0.85rem;
           font-weight: 600;
@@ -240,14 +268,16 @@ const Login = () => {
         }
 
         .back-home:hover {
-          color: #d97706;
+          color: #0f172a;
         }
       `}</style>
 
       <div className="login-page">
         <div className="login-card">
           <div className="login-header">
-            <ShieldCheck size={44} color="#d97706" style={{ margin: '0 auto' }} />
+            <div className="logo-container">
+              <img src={logoImg} alt="Stacon League Logo" className="login-logo" />
+            </div>
             <span className="header-tag">Stacon League</span>
             <h2>Admin Portal</h2>
           </div>
