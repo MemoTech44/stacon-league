@@ -86,7 +86,7 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select Option" 
               <div
                 key={opt.id || opt.name}
                 onClick={() => {
-                  onChange(opt.name); // Store team/player name or ID as configured
+                  onChange(opt.name);
                   setIsOpen(false);
                 }}
                 style={{
@@ -204,20 +204,20 @@ const ResultsManager = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [activeFixture, setActiveFixture] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
   
   // Tabs & Settings
-  const [activeTab, setActiveTab] = useState("fixtures"); // "fixtures", "legacy_setup", or "add_matchday"
+  const [activeTab, setActiveTab] = useState("fixtures");
   
-  // Current Live Season & Selected Matchday
-  const [currentLiveSeason, setCurrentLiveSeason] = useState("Season 7");
+  // FIX 1: Start currentLiveSeason as null so we know when it's loaded
+  const [currentLiveSeason, setCurrentLiveSeason] = useState(null);
   const [selectedMatchday, setSelectedMatchday] = useState("1");
   const [availableMatchdays, setAvailableMatchdays] = useState(["1", "2", "3", "4", "Gala"]);
 
-  // Modal / Inline trigger for creating a new custom matchday
   const [showAddMatchdayModal, setShowAddMatchdayModal] = useState(false);
   const [newMatchdayName, setNewMatchdayName] = useState("");
 
-  // Legacy Season Setup State (For past seasons)
+  // Legacy Season Setup State
   const [legacySeason, setLegacySeason] = useState("Season 1");
   const [legacyStandings, setLegacyStandings] = useState([
     { clubName: '', position: 1, played: 0, won: 0, drawn: 0, lost: 0, points: 0, gf: 0, ga: 0 }
@@ -234,18 +234,21 @@ const ResultsManager = () => {
 
   const allSeasonsList = ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5", "Season 6", "Season 7", "Season 8", "Season 9", "Season 10"];
 
+  // FIX 2: Fetch settings first, THEN trigger data load via useEffect on currentLiveSeason
   useEffect(() => {
     fetchSystemSettings();
   }, []);
 
+  // FIX 3: Only fetch fixtures once currentLiveSeason is actually set
   useEffect(() => {
+    if (!currentLiveSeason) return;
     if (activeTab === "fixtures" || activeTab === "add_matchday") {
       fetchData();
     } else if (activeTab === "legacy_setup") {
       fetchClubsAndPlayers();
       fetchLegacySeasonData(legacySeason);
     }
-  }, [selectedMatchday, activeTab]);
+  }, [selectedMatchday, activeTab, currentLiveSeason]); // added currentLiveSeason as dependency
 
   useEffect(() => {
     if (activeTab === "legacy_setup") {
@@ -258,41 +261,54 @@ const ResultsManager = () => {
       const settingsDoc = await getDoc(doc(db, "settings", "leagueConfig"));
       if (settingsDoc.exists()) {
         const data = settingsDoc.data();
-        if (data.currentSeason) {
-          setCurrentLiveSeason(data.currentSeason);
-        }
+        setCurrentLiveSeason(data.currentSeason || "Season 7");
+      } else {
+        setCurrentLiveSeason("Season 7");
       }
     } catch (error) {
       console.error("Error fetching system settings:", error);
+      setCurrentLiveSeason("Season 7"); // fallback so the app doesn't hang
     }
   };
 
   const fetchData = async () => {
+    if (!currentLiveSeason) return;
     setFetching(true);
+    setDebugInfo(null);
     try {
-      const fixQuery = query(
-        collection(db, "fixtures"), 
-        where("season", "==", currentLiveSeason),
-        where("matchday", "==", selectedMatchday)
-      );
-      const fixSnap = await getDocs(fixQuery);
-      
-      const fetchedFixtures = fixSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      fetchedFixtures.sort((a, b) => {
-        const dateA = new Date(a.date || 0);
-        const dateB = new Date(b.date || 0);
-        if (dateB - dateA !== 0) return dateB - dateA;
-        return (a.time || "").localeCompare(b.time || "");
+      // Step 1: Fetch ALL fixtures (no filter) so we can diagnose mismatches
+      const allSnap = await getDocs(collection(db, "fixtures"));
+      const allFixtures = allSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Build a debug summary: unique seasons & matchdays actually in Firestore
+      const uniqueSeasons = [...new Set(allFixtures.map(f => f.season))];
+      const forThisSeason = allFixtures.filter(f => f.season === currentLiveSeason);
+      const uniqueMatchdays = [...new Set(forThisSeason.map(f => String(f.matchday)))];
+
+      setDebugInfo({
+        totalFixtures: allFixtures.length,
+        uniqueSeasons,
+        forThisSeason: forThisSeason.length,
+        uniqueMatchdays,
+        selectedMatchday,
+        currentLiveSeason,
       });
+
+      // Step 2: Filter to the current season and selected matchday client-side
+      const fetchedFixtures = forThisSeason
+        .filter(f => String(f.matchday) === String(selectedMatchday))
+        .sort((a, b) => {
+          const dateA = new Date(a.date || 0);
+          const dateB = new Date(b.date || 0);
+          if (dateA - dateB !== 0) return dateA - dateB;
+          return (a.time || "").localeCompare(b.time || "");
+        });
 
       setFixtures(fetchedFixtures);
 
-      const allSeasonFixturesQuery = query(collection(db, "fixtures"), where("season", "==", currentLiveSeason));
-      const allSeasonSnap = await getDocs(allSeasonFixturesQuery);
-      const dbMatchdays = Array.from(new Set(allSeasonSnap.docs.map(d => d.data().matchday).filter(Boolean)));
-      
+      // Build available matchdays from real Firestore data for this season
       const defaultMDs = ["1", "2", "3", "4", "Gala"];
-      const combined = Array.from(new Set([...defaultMDs, ...dbMatchdays]));
+      const combined = Array.from(new Set([...defaultMDs, ...uniqueMatchdays]));
       combined.sort((a, b) => {
         if (!isNaN(a) && !isNaN(b)) return Number(a) - Number(b);
         return a.localeCompare(b);
@@ -302,6 +318,7 @@ const ResultsManager = () => {
       await fetchClubsAndPlayers();
     } catch (error) {
       console.error(error);
+      setDebugInfo({ error: error.message });
     } finally {
       setFetching(false);
     }
@@ -321,7 +338,6 @@ const ResultsManager = () => {
 
   const fetchLegacySeasonData = async (season) => {
     try {
-      // Always pull a fresh club list so dropdown options and existing stats are in sync
       const clubSnap = await getDocs(collection(db, "clubs"));
       const clubsList = clubSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       setClubs(clubsList);
@@ -401,8 +417,8 @@ const ResultsManager = () => {
     }
 
     setActiveFixture(f.id);
-    setHomeScore(f.homeScore || 0);
-    setAwayScore(f.awayScore || 0);
+    setHomeScore(f.homeScore ?? 0);
+    setAwayScore(f.awayScore ?? 0);
     setMatchScorers(f.scorers || []);
     setAdminNote(f.adminNote || "");
   };
@@ -425,16 +441,28 @@ const ResultsManager = () => {
 
     try {
       const fixtureRef = doc(db, "fixtures", fixture.id);
-      
+
+      // FIX 5: Build clean scorer objects to store — name + minute (+ playerId if present)
+      const cleanScorers = matchScorers.map(s => ({
+        name: s.name || s.playerId || '',   // playerId holds the player name from CustomSelect
+        playerId: s.playerId || '',
+        minute: s.minute || ''
+      }));
+
+      // FIX 6: Use lowercase 'completed' consistently everywhere
       batch.update(fixtureRef, { 
         status: 'completed',
         homeScore: Number(homeScore),
         awayScore: Number(awayScore),
-        scorers: matchScorers,
+        scorers: cleanScorers,
         adminNote: adminNote
       });
 
-      if (fixture.status !== 'completed') {
+      // FIX 7: Check against BOTH 'completed' and 'Completed' (case-insensitive)
+      // so re-submitting an already-completed fixture doesn't double-count stats
+      const isAlreadyCompleted = fixture.status && fixture.status.toLowerCase() === 'completed';
+
+      if (!isAlreadyCompleted) {
         const hPoints = homeScore > awayScore ? 3 : homeScore === awayScore ? 1 : 0;
         const aPoints = awayScore > homeScore ? 3 : awayScore === homeScore ? 1 : 0;
         
@@ -444,25 +472,64 @@ const ResultsManager = () => {
         if (homeClub && awayClub) {
           batch.update(doc(db, "clubs", homeClub.id), {
             [`stats.${currentLiveSeason}.played`]: increment(1),
+            [`stats.${currentLiveSeason}.won`]: increment(homeScore > awayScore ? 1 : 0),
+            [`stats.${currentLiveSeason}.drawn`]: increment(homeScore === awayScore ? 1 : 0),
+            [`stats.${currentLiveSeason}.lost`]: increment(homeScore < awayScore ? 1 : 0),
             [`stats.${currentLiveSeason}.points`]: increment(hPoints),
             [`stats.${currentLiveSeason}.gf`]: increment(Number(homeScore)),
             [`stats.${currentLiveSeason}.ga`]: increment(Number(awayScore)),
           });
           batch.update(doc(db, "clubs", awayClub.id), {
             [`stats.${currentLiveSeason}.played`]: increment(1),
+            [`stats.${currentLiveSeason}.won`]: increment(awayScore > homeScore ? 1 : 0),
+            [`stats.${currentLiveSeason}.drawn`]: increment(awayScore === homeScore ? 1 : 0),
+            [`stats.${currentLiveSeason}.lost`]: increment(awayScore < homeScore ? 1 : 0),
             [`stats.${currentLiveSeason}.points`]: increment(aPoints),
             [`stats.${currentLiveSeason}.gf`]: increment(Number(awayScore)),
             [`stats.${currentLiveSeason}.ga`]: increment(Number(homeScore)),
           });
         }
 
-        matchScorers.forEach(s => {
-          if (s.playerId) {
-            batch.update(doc(db, "players", s.playerId), { 
-              [`goals.${currentLiveSeason}`]: increment(1) 
+        // FIX 8: Update top scorers collection per player name
+        for (const s of cleanScorers) {
+          if (!s.name) continue;
+
+          // Find the player doc by name to get their club
+          const playerDoc = players.find(p =>
+            (p.name || p.username || '').toLowerCase() === s.name.toLowerCase()
+          );
+
+          // Increment goals on the player doc if we have their ID
+          if (playerDoc) {
+            batch.update(doc(db, "players", playerDoc.id), {
+              [`goals.${currentLiveSeason}`]: increment(1)
             });
           }
-        });
+
+          // Upsert into topScorers collection
+          // We query after batch, so do a separate upsert approach via a deterministic doc ID
+          // Use a stable key: season_playerName (lowercased, spaces replaced)
+          const scorerDocId = `${currentLiveSeason.replace(/\s/g, '_')}_${s.name.replace(/\s/g, '_')}`.toLowerCase();
+          const scorerRef = doc(db, "topScorers", scorerDocId);
+          const scorerSnap = await getDoc(scorerRef);
+
+          if (scorerSnap.exists()) {
+            batch.update(scorerRef, {
+              goals: increment(1),
+              season: currentLiveSeason,
+              name: s.name,
+              club: playerDoc ? (playerDoc.club || playerDoc.team || '') : ''
+            });
+          } else {
+            batch.set(scorerRef, {
+              goals: 1,
+              season: currentLiveSeason,
+              name: s.name,
+              appearances: 0,
+              club: playerDoc ? (playerDoc.club || playerDoc.team || '') : ''
+            });
+          }
+        }
       }
 
       await batch.commit();
@@ -471,6 +538,7 @@ const ResultsManager = () => {
       alert("Matchday results updated successfully!");
     } catch (e) {
       console.error(e);
+      alert("Error saving result: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -511,8 +579,6 @@ const ResultsManager = () => {
         }
       }
 
-      // Clear out previously saved scorer entries for this season so edits
-      // (renames, removals, changed goal counts) don't leave stale duplicates behind
       const existingScorersSnap = await getDocs(
         query(collection(db, "topScorers"), where("season", "==", legacySeason))
       );
@@ -540,6 +606,16 @@ const ResultsManager = () => {
       setLoading(false);
     }
   };
+
+  // Show loading state while season config is being fetched
+  if (!currentLiveSeason) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px', color: '#94a3b8' }}>
+        <Loader2 className="animate-spin" size={32} style={{ marginRight: '12px' }} />
+        Loading season configuration...
+      </div>
+    );
+  }
 
   return (
     <div className="results-container">
@@ -714,7 +790,7 @@ const ResultsManager = () => {
             </select>
           </div>
 
-          {/* SECTION 1: Team Standings & Outcomes (With CustomSelect for registered clubs) */}
+          {/* SECTION 1: Team Standings */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -744,118 +820,31 @@ const ResultsManager = () => {
                       placeholder="Select Club"
                     />
                   </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Position</span>
-                    <input 
-                      type="number" 
-                      value={item.position} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].position = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Played</span>
-                    <input 
-                      type="number" 
-                      value={item.played} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].played = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Won</span>
-                    <input 
-                      type="number" 
-                      value={item.won} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].won = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Drawn</span>
-                    <input 
-                      type="number" 
-                      value={item.drawn} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].drawn = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Lost</span>
-                    <input 
-                      type="number" 
-                      value={item.lost} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].lost = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Points</span>
-                    <input 
-                      type="number" 
-                      value={item.points} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].points = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center', color: '#facc15', fontWeight: 'bold' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Goals For</span>
-                    <input 
-                      type="number" 
-                      value={item.gf} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].gf = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Goals Agst</span>
-                    <input 
-                      type="number" 
-                      value={item.ga} 
-                      onChange={e => {
-                        const copy = [...legacyStandings];
-                        copy[idx].ga = e.target.value;
-                        setLegacyStandings(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
+                  {[
+                    { label: 'Position', key: 'position' },
+                    { label: 'Played', key: 'played' },
+                    { label: 'Won', key: 'won' },
+                    { label: 'Drawn', key: 'drawn' },
+                    { label: 'Lost', key: 'lost' },
+                    { label: 'Points', key: 'points' },
+                    { label: 'Goals For', key: 'gf' },
+                    { label: 'Goals Agst', key: 'ga' },
+                  ].map(({ label, key }) => (
+                    <div key={key}>
+                      <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>{label}</span>
+                      <input 
+                        type="number" 
+                        value={item[key]} 
+                        onChange={e => {
+                          const copy = [...legacyStandings];
+                          copy[idx][key] = e.target.value;
+                          setLegacyStandings(copy);
+                        }}
+                        className="custom-input"
+                        style={{ textAlign: 'center', ...(key === 'points' ? { color: '#facc15', fontWeight: 'bold' } : {}) }}
+                      />
+                    </div>
+                  ))}
                   <div style={{ paddingTop: '16px' }}>
                     <button 
                       onClick={() => {
@@ -873,7 +862,7 @@ const ResultsManager = () => {
             ))}
           </div>
 
-          {/* SECTION 2: Top Scorers (Using CustomSelect for Club selection) */}
+          {/* SECTION 2: Top Scorers */}
           <div style={{ marginBottom: '25px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -996,6 +985,9 @@ const ResultsManager = () => {
             <div className="card" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
               <Calendar size={36} color="#facc15" style={{ margin: '0 auto 10px auto', opacity: 0.8 }} />
               <p style={{ fontWeight: 600 }}>No fixtures found for Matchday {selectedMatchday} in {currentLiveSeason}.</p>
+              <p style={{ fontSize: '0.8rem', marginTop: '6px', color: '#64748b' }}>
+                Make sure fixtures have been scheduled in the Fixture Manager for this matchday and season.
+              </p>
               <button 
                 onClick={() => setActiveTab("add_matchday")}
                 style={{ marginTop: '12px', background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '8px 16px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '0.8rem' }}
@@ -1006,11 +998,18 @@ const ResultsManager = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               {fixtures.map((fixture) => (
-                <div key={fixture.id} className={`card ${fixture.status === 'completed' ? 'completed-card' : ''}`}>
+                <div key={fixture.id} className={`card ${fixture.status && fixture.status.toLowerCase() === 'completed' ? 'completed-card' : ''}`}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '0.75rem', color: '#94a3b8' }}>
                     <span>{fixture.date || 'TBD'} {fixture.time ? `• ${fixture.time}` : ''}</span>
-                    <span style={{ padding: '2px 8px', borderRadius: '6px', background: fixture.status === 'completed' ? 'rgba(250, 204, 21, 0.15)' : 'rgba(255, 255, 255, 0.05)', color: fixture.status === 'completed' ? '#facc15' : '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
-                      {fixture.status === 'completed' ? 'Completed' : 'Upcoming'}
+                    <span style={{ 
+                      padding: '2px 8px', 
+                      borderRadius: '6px', 
+                      background: fixture.status && fixture.status.toLowerCase() === 'completed' ? 'rgba(250, 204, 21, 0.15)' : 'rgba(255, 255, 255, 0.05)', 
+                      color: fixture.status && fixture.status.toLowerCase() === 'completed' ? '#facc15' : '#94a3b8', 
+                      fontWeight: 800, 
+                      textTransform: 'uppercase' 
+                    }}>
+                      {fixture.status && fixture.status.toLowerCase() === 'completed' ? 'Completed' : 'Upcoming'}
                     </span>
                   </div>
 
@@ -1019,8 +1018,10 @@ const ResultsManager = () => {
                       {fixture.homeTeam}
                     </div>
                     <div style={{ padding: '0 20px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 900, color: fixture.status === 'completed' ? '#facc15' : '#94a3b8' }}>
-                        {fixture.status === 'completed' ? `${fixture.homeScore} - ${fixture.awayScore}` : 'VS'}
+                      <span style={{ fontSize: '1.4rem', fontWeight: 900, color: fixture.status && fixture.status.toLowerCase() === 'completed' ? '#facc15' : '#94a3b8' }}>
+                        {fixture.status && fixture.status.toLowerCase() === 'completed'
+                          ? `${fixture.homeScore} - ${fixture.awayScore}`
+                          : 'VS'}
                       </span>
                     </div>
                     <div style={{ flex: 1, textAlign: 'left', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
@@ -1032,9 +1033,12 @@ const ResultsManager = () => {
                     <div style={{ background: '#0b1329', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '10px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
                         <div>
-                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Home Score</span>
+                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>
+                            {fixture.homeTeam} Score
+                          </span>
                           <input 
-                            type="number" 
+                            type="number"
+                            min="0"
                             value={homeScore} 
                             onChange={(e) => setHomeScore(e.target.value)}
                             className="custom-input"
@@ -1042,9 +1046,12 @@ const ResultsManager = () => {
                           />
                         </div>
                         <div>
-                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Away Score</span>
+                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>
+                            {fixture.awayTeam} Score
+                          </span>
                           <input 
-                            type="number" 
+                            type="number"
+                            min="0"
                             value={awayScore} 
                             onChange={(e) => setAwayScore(e.target.value)}
                             className="custom-input"
@@ -1056,9 +1063,11 @@ const ResultsManager = () => {
                       {/* Scorers Section */}
                       <div style={{ marginBottom: '15px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase' }}>Match Scorers</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase' }}>
+                            Match Scorers ({Number(homeScore) + Number(awayScore)} goal{Number(homeScore) + Number(awayScore) !== 1 ? 's' : ''})
+                          </span>
                           <button 
-                            onClick={() => setMatchScorers([...matchScorers, { playerId: '', minute: '' }])}
+                            onClick={() => setMatchScorers([...matchScorers, { playerId: '', name: '', minute: '' }])}
                             style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}
                           >
                             + Add Scorer
@@ -1067,10 +1076,11 @@ const ResultsManager = () => {
                         {matchScorers.map((scorer, sIdx) => (
                           <div key={sIdx} style={{ display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
                             <CustomSelect 
-                              value={scorer.playerId}
+                              value={scorer.playerId || scorer.name}
                               onChange={(val) => {
                                 const copy = [...matchScorers];
                                 copy[sIdx].playerId = val;
+                                copy[sIdx].name = val; // store name directly too
                                 setMatchScorers(copy);
                               }}
                               options={players.map(p => ({ id: p.id, name: p.name || p.username || 'Player' }))}
@@ -1099,6 +1109,11 @@ const ResultsManager = () => {
                             </button>
                           </div>
                         ))}
+                        {matchScorers.length === 0 && (
+                          <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                            No scorers added yet. Click "+ Add Scorer" for each goal.
+                          </p>
+                        )}
                       </div>
 
                       <div style={{ marginBottom: '15px' }}>
@@ -1134,7 +1149,7 @@ const ResultsManager = () => {
                         onClick={() => openEditor(fixture)}
                         style={{ background: 'rgba(250, 204, 21, 0.1)', border: '1px solid rgba(250, 204, 21, 0.2)', color: '#facc15', padding: '6px 14px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                       >
-                        <Edit3 size={13} /> {fixture.status === 'completed' ? 'Edit Result' : 'Add Result'}
+                        <Edit3 size={13} /> {fixture.status && fixture.status.toLowerCase() === 'completed' ? 'Edit Result' : 'Add Result'}
                       </button>
                     </div>
                   )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, orderBy, where } from 'firebase/firestore';
 import { toJpeg } from 'html-to-image';
 import { 
   Search, 
@@ -10,12 +10,13 @@ import {
   Clock, 
   MapPin, 
   ChevronRight, 
-  X,
   CalendarX,
   Download,
   LayoutGrid,
   Trophy
 } from 'lucide-react';
+
+const allSeasonsList = ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5", "Season 6", "Season 7", "Season 8", "Season 9", "Season 10"];
 
 const FixturesAndResults = () => {
   const [fixtures, setFixtures] = useState([]);
@@ -25,22 +26,33 @@ const FixturesAndResults = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'upcoming', 'results'
-  const [selectedSeason, setSelectedSeason] = useState("Season 2");
+  const [currentSeason, setCurrentSeason] = useState("Season 7");
+  const [selectedSeason, setSelectedSeason] = useState("Season 7");
   const [selectedMatchday, setSelectedMatchday] = useState('All');
-  const [selectedFixture, setSelectedFixture] = useState(null);
 
   const resultsRef = useRef(null);
-  const seasons = ["Season 1", "Season 2", "Season 3", "Season 4"];
 
-  // Lock body scroll when modal is open
+  // Seasons that actually have data (a completed fixture or a legacy stats entry),
+  // so the season-picker never shows empty placeholders.
+  const [seasonsWithData, setSeasonsWithData] = useState([]);
+
+  // Read the league-wide current season the admin set (same doc FixturesManager
+  // and ResultsManager write to) and default the filters to it.
   useEffect(() => {
-    if (selectedFixture) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [selectedFixture]);
+    const fetchCurrentSeason = async () => {
+      try {
+        const snap = await getDoc(doc(db, "settings", "leagueConfig"));
+        if (snap.exists() && snap.data().currentSeason) {
+          const active = snap.data().currentSeason;
+          setCurrentSeason(active);
+          setSelectedSeason(active);
+        }
+      } catch (error) {
+        console.error("Error fetching current season:", error);
+      }
+    };
+    fetchCurrentSeason();
+  }, []);
 
   // Fetch clubs/logos and fixtures data
   useEffect(() => {
@@ -79,6 +91,18 @@ const FixturesAndResults = () => {
           };
         });
         setFixtures(data);
+
+        // Also check which seasons have legacy stats saved directly on clubs,
+        // so past seasons with no fixture docs still show up as selectable.
+        const clubsSnapshot = await getDocs(collection(db, "clubs"));
+        const legacySeasons = new Set();
+        clubsSnapshot.docs.forEach(d => {
+          const stats = d.data().stats || {};
+          Object.keys(stats).forEach(s => legacySeasons.add(s));
+        });
+        const fixtureSeasons = new Set(data.map(f => f.season));
+        const combined = new Set([...legacySeasons, ...fixtureSeasons]);
+        setSeasonsWithData(allSeasonsList.filter(s => combined.has(s)));
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -88,41 +112,64 @@ const FixturesAndResults = () => {
     fetchData();
   }, []);
 
-  // Extract available matchdays for the selected season (for results view)
-  const availableMatchdays = useMemo(() => {
-    const seasonFixtures = fixtures.filter(f => 
-      f.season === selectedSeason && 
-      (f.status.toLowerCase() === 'completed' || f.status.toLowerCase() === 'ft')
-    );
-    const mdays = [...new Set(seasonFixtures.map(m => m.matchday))].sort((a, b) => {
+  // The list of season pills to show: any season with data, plus the current
+  // season even before it has a result, deduped and in order.
+  const seasonOptions = useMemo(() => {
+    const combined = new Set([...seasonsWithData, currentSeason]);
+    return allSeasonsList.filter(s => combined.has(s));
+  }, [seasonsWithData, currentSeason]);
+
+  // Reset the gameweek filter whenever the season or tab changes, since the
+  // set of available gameweeks is different for each combination.
+  useEffect(() => {
+    setSelectedMatchday('All');
+  }, [selectedSeason, activeTab]);
+
+  // Fixtures scoped to the selected season only
+  const seasonScopedFixtures = useMemo(() => 
+    fixtures.filter(f => f.season === selectedSeason)
+  , [fixtures, selectedSeason]);
+
+  // Gameweeks available to pick from, matching whatever the active tab shows
+  // (all fixtures, upcoming only, or completed results only) for that season
+  const matchdayOptions = useMemo(() => {
+    let base = seasonScopedFixtures;
+    if (activeTab === 'upcoming') {
+      base = base.filter(f => f.status && f.status.toLowerCase() === 'upcoming');
+    } else if (activeTab === 'results') {
+      base = base.filter(f => f.status && (f.status.toLowerCase() === 'completed' || f.status.toLowerCase() === 'ft'));
+    }
+    return [...new Set(base.map(m => m.matchday))].sort((a, b) => {
       const numA = Number(a);
       const numB = Number(b);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return String(a).localeCompare(String(b));
     });
-    return mdays;
-  }, [fixtures, selectedSeason]);
+  }, [seasonScopedFixtures, activeTab]);
 
-  // Filter logic for Upcoming / All Fixtures view
+  // Filter logic for Upcoming / All Fixtures view — season + gameweek + search
   const filteredFixtures = useMemo(() => {
-    let result = fixtures;
+    let result = seasonScopedFixtures;
     if (activeTab === 'upcoming') {
       result = result.filter(f => f.status && f.status.toLowerCase() === 'upcoming');
     }
-    
+
+    if (selectedMatchday !== 'All') {
+      result = result.filter(f => String(f.matchday) === String(selectedMatchday));
+    }
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase().trim();
       result = result.filter(f => 
         (f.homeTeam && f.homeTeam.toLowerCase().includes(term)) ||
         (f.awayTeam && f.awayTeam.toLowerCase().includes(term)) ||
-        (f.venue && f.venue.toLowerCase().includes(term)) ||
-        (f.matchday && String(f.matchday).toLowerCase().includes(term))
+        (f.venue && f.venue.toLowerCase().includes(term))
       );
     }
     return result;
-  }, [searchTerm, activeTab, fixtures]);
+  }, [searchTerm, activeTab, seasonScopedFixtures, selectedMatchday]);
 
-  // Group the All Fixtures / Upcoming list by Season + Matchday so venue & date
+  // Group the All Fixtures / Upcoming list by matchday so venue & date
   // are shown once per group instead of being repeated on every single match row
   const groupedFixtures = useMemo(() => {
     const groups = {};
@@ -147,18 +194,17 @@ const FixturesAndResults = () => {
     }));
   }, [filteredFixtures]);
 
-  // Filter logic for Results View grouped by matchday
+  // Filter logic for Results View grouped by matchday — season + gameweek
   const resultsData = useMemo(() => {
-    let result = fixtures.filter(f => 
-      f.season === selectedSeason && 
-      (f.status.toLowerCase() === 'completed' || f.status.toLowerCase() === 'ft')
+    let result = seasonScopedFixtures.filter(f => 
+      f.status.toLowerCase() === 'completed' || f.status.toLowerCase() === 'ft'
     );
 
     if (selectedMatchday !== 'All') {
       result = result.filter(m => String(m.matchday) === String(selectedMatchday));
     }
     return result;
-  }, [fixtures, selectedSeason, selectedMatchday]);
+  }, [seasonScopedFixtures, selectedMatchday]);
 
   const groupedByMatchday = useMemo(() => {
     return resultsData.reduce((acc, match) => {
@@ -190,12 +236,6 @@ const FixturesAndResults = () => {
       alert("Failed to generate image. Please check your connection.");
     } finally {
       setDownloading(false);
-    }
-  };
-
-  const handleBackdropClick = (e) => {
-    if (e.target.classList.contains('modal-backdrop')) {
-      setSelectedFixture(null);
     }
   };
 
@@ -295,21 +335,6 @@ const FixturesAndResults = () => {
           box-shadow: 0 4px 15px rgba(12, 28, 140, 0.2);
         }
 
-        /* Controls Bar for Fixtures/Upcoming */
-        .controls-bar { 
-          display: flex; 
-          flex-wrap: wrap; 
-          gap: 15px; 
-          justify-content: space-between; 
-          align-items: center;
-          background: #ffffff; 
-          padding: 16px 22px; 
-          border-radius: 20px;
-          margin-bottom: 32px; 
-          box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04); 
-          border: 1px solid #e2e8f0;
-        }
-
         .search-box { position: relative; width: 320px; max-width: 100%; }
         
         .search-box input { 
@@ -351,7 +376,7 @@ const FixturesAndResults = () => {
           color: #64748b;
         }
 
-        /* Results Specific Selectors */
+        /* Unified filter panel: season pills + gameweek pills + (search or download) */
         .results-control-panel {
           background: #ffffff;
           padding: 22px;
@@ -372,6 +397,8 @@ const FixturesAndResults = () => {
           padding: 6px; 
           border-radius: 18px; 
           border: 1px solid #e2e8f0; 
+          flex-wrap: wrap;
+          justify-content: center;
         }
 
         .season-pill { 
@@ -387,6 +414,9 @@ const FixturesAndResults = () => {
           letter-spacing: 0.5px;
           font-family: 'Cinzel', serif;
           text-transform: uppercase;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .season-pill:hover { color: #0c1c8c; }
@@ -395,6 +425,14 @@ const FixturesAndResults = () => {
           background: #0c1c8c; 
           color: #ffffff; 
           box-shadow: 0 4px 15px rgba(12, 28, 140, 0.2);
+        }
+
+        .current-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #c59b27;
+          display: inline-block;
         }
 
         .filter-container { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -426,10 +464,13 @@ const FixturesAndResults = () => {
           border-color: #0c1c8c; 
         }
 
-        .action-bar {
+        .panel-footer {
           display: flex;
-          justify-content: flex-end;
-          margin-bottom: 25px;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          flex-wrap: wrap;
+          gap: 10px;
         }
 
         .download-btn {
@@ -500,14 +541,6 @@ const FixturesAndResults = () => {
           align-items: center;
           border: 1px solid #e2e8f0; 
           box-shadow: 0 6px 16px rgba(12, 28, 140, 0.04); 
-          transition: all 0.25s ease;
-        }
-
-        .match-card:hover { 
-          transform: translateY(-2px); 
-          border-color: #0c1c8c; 
-          box-shadow: 0 10px 22px rgba(12, 28, 140, 0.08);
-          cursor: pointer;
         }
 
         .team { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -584,128 +617,8 @@ const FixturesAndResults = () => {
           box-shadow: 0 10px 30px rgba(12, 28, 140, 0.04);
         }
 
-        /* Modal Styling */
-        .modal-backdrop { 
-          position: fixed; 
-          inset: 0; 
-          background: rgba(12, 28, 140, 0.4); 
-          backdrop-filter: blur(8px); 
-          z-index: 9999; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          padding: 20px; 
-        }
-
-        .modal-container { 
-          background: #ffffff; 
-          color: #0f172a;
-          width: 100%; 
-          max-width: 480px; 
-          max-height: 85vh; 
-          border-radius: 26px; 
-          overflow: hidden; 
-          position: relative; 
-          display: flex; 
-          flex-direction: column; 
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 25px 50px rgba(12, 28, 140, 0.15); 
-        }
-        
-        .modal-scroll { 
-          overflow-y: auto; 
-          padding-bottom: 36px;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .modal-scroll::-webkit-scrollbar { display: none; }
-
-        .close-btn {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid #e2e8f0;
-          border-radius: 50%;
-          width: 36px;
-          height: 36px;
-          z-index: 10;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-        }
-
-        .close-btn:hover {
-          background: #0c1c8c;
-          color: #ffffff;
-        }
-
-        .match-badge-tag { 
-          color: #0c1c8c; 
-          font-size: 0.72rem; 
-          font-weight: 800; 
-          text-transform: uppercase; 
-          letter-spacing: 1px;
-          background: #f8fafc; 
-          padding: 7px 16px;
-          border-radius: 50px;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          border: 1px solid #e2e8f0;
-          position: relative;
-          overflow: hidden;
-          font-family: 'Cinzel', serif;
-        }
-
-        .match-badge-tag::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 2px;
-          background: #c59b27;
-        }
-
-        .modal-info-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-
-        .modal-info-card {
-          background: #f8fafc;
-          padding: 14px;
-          border-radius: 14px;
-          border: 1px solid #e2e8f0;
-        }
-
-        .modal-info-label {
-          display: block;
-          font-size: 0.65rem;
-          font-family: 'Cinzel', serif;
-          font-weight: 700;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .modal-info-value {
-          font-size: 0.82rem;
-          color: #0c1c8c;
-          display: block;
-          font-weight: 700;
-          text-transform: uppercase;
-          margin-top: 3px;
-        }
-
         @media (max-width: 900px) {
           .fixtures-results-page { padding-top: 100px; padding-left: 16px; padding-right: 16px; }
-          .controls-bar { flex-direction: column; align-items: stretch; gap: 12px; }
           .search-box { width: 100%; }
           .match-card { grid-template-columns: 1fr 60px 1fr; padding: 10px 12px; }
           .team-name { font-size: 0.85rem; }
@@ -744,69 +657,65 @@ const FixturesAndResults = () => {
           </button>
         </div>
 
-        {/* CONTROLS FOR FIXTURES / UPCOMING */}
-        {activeTab !== 'results' && (
-          <div className="controls-bar">
+        {/* UNIFIED SEASON + GAMEWEEK FILTER PANEL — shared by all three tabs */}
+        <div className="results-control-panel">
+          <div className="season-selector">
+            {seasonOptions.map(s => (
+              <button 
+                key={s} 
+                className={`season-pill ${selectedSeason === s ? 'active' : ''}`} 
+                onClick={() => setSelectedSeason(s)}
+              >
+                {s}
+                {s === currentSeason && <span className="current-dot" title="Current season" />}
+              </button>
+            ))}
+          </div>
+
+          <div className="filter-container">
+            <button 
+              className={`filter-btn ${selectedMatchday === 'All' ? 'active' : ''}`} 
+              onClick={() => setSelectedMatchday('All')}
+            >
+              <LayoutGrid size={13} style={{ marginRight: '6px' }}/> All Gameweeks
+            </button>
+            {matchdayOptions.map(md => (
+              <button 
+                key={md} 
+                className={`filter-btn ${selectedMatchday === md ? 'active' : ''}`} 
+                onClick={() => setSelectedMatchday(md)}
+              >
+                {isNaN(md) ? md : `GAMEWEEK ${md}`}
+              </button>
+            ))}
+          </div>
+
+          {activeTab !== 'results' && (
             <div className="search-box">
               <Search size={18} />
               <input 
                 type="text" 
-                placeholder="Search teams, venues, rounds..." 
+                placeholder="Search teams or venues..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="match-count">
-              Showing {filteredFixtures.length} matches
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* CONTROLS FOR RESULTS */}
-        {activeTab === 'results' && (
-          <div className="results-control-panel">
-            <div className="season-selector">
-              {seasons.map(s => (
-                <button 
-                  key={s} 
-                  className={`season-pill ${selectedSeason === s ? 'active' : ''}`} 
-                  onClick={() => setSelectedSeason(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-
-            <div className="filter-container">
-              <button 
-                className={`filter-btn ${selectedMatchday === 'All' ? 'active' : ''}`} 
-                onClick={() => setSelectedMatchday('All')}
-              >
-                <LayoutGrid size={13} style={{ marginRight: '6px' }}/> All Rounds
+          <div className="panel-footer">
+            <span className="match-count">
+              Showing {activeTab === 'results' ? resultsData.length : filteredFixtures.length} matches
+            </span>
+            {activeTab === 'results' && resultsData.length > 0 && (
+              <button className="download-btn" onClick={downloadResults} disabled={downloading}>
+                {downloading ? <Loader2 className="animate-spin" size={15}/> : <Download size={15}/>}
+                SAVE AS JPG
               </button>
-              {availableMatchdays.map(md => (
-                <button 
-                  key={md} 
-                  className={`filter-btn ${selectedMatchday === md ? 'active' : ''}`} 
-                  onClick={() => setSelectedMatchday(md)}
-                >
-                  {isNaN(md) ? md : `GAMEWEEK ${md}`}
-                </button>
-              ))}
-            </div>
-
-            {resultsData.length > 0 && (
-              <div className="action-bar" style={{ width: '100%', marginBottom: 0, justifyContent: 'flex-end' }}>
-                <button className="download-btn" onClick={downloadResults} disabled={downloading}>
-                  {downloading ? <Loader2 className="animate-spin" size={15}/> : <Download size={15}/>}
-                  SAVE AS JPG
-                </button>
-              </div>
             )}
           </div>
-        )}
+        </div>
 
-        {/* DISPLAY: ALL FIXTURES / UPCOMING — grouped by matchday, venue & date shown once per group */}
+        {/* DISPLAY: ALL FIXTURES / UPCOMING — grouped by gameweek, venue & date shown once per group */}
         {activeTab !== 'results' ? (
           <div className="table-wrapper">
             {groupedFixtures.length === 0 ? (
@@ -815,7 +724,7 @@ const FixturesAndResults = () => {
                 <h3 style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: '#0c1c8c', margin: '0 0 5px 0' }}>
                   No Matches Found
                 </h3>
-                <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>Try searching with different team names or filters.</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>Try a different season, gameweek, or search term.</p>
               </div>
             ) : (
               groupedFixtures.map(group => (
@@ -831,7 +740,7 @@ const FixturesAndResults = () => {
                   </div>
 
                   {group.matches.map(fixture => (
-                    <div key={fixture.id} className="match-card" onClick={() => setSelectedFixture(fixture)}>
+                    <div key={fixture.id} className="match-card">
                       {/* HOME */}
                       <div className="team home">
                         <span className="team-name">{fixture.homeTeam}</span>
@@ -880,7 +789,7 @@ const FixturesAndResults = () => {
               <div className="empty-state">
                 <Trophy size={48} className="color-yellow" style={{ marginBottom: '15px' }}/>
                 <h3 style={{ fontFamily: 'Bebas Neue', fontSize: '1.8rem', color: '#0c1c8c', margin: '0 0 5px 0' }}>No Records Found</h3>
-                <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>No completed results recorded for {selectedSeason}.</p>
+                <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>No completed results recorded for {selectedSeason}{selectedMatchday !== 'All' ? `, gameweek ${selectedMatchday}` : ''}.</p>
               </div>
             ) : (
               <div ref={resultsRef}>
@@ -888,7 +797,7 @@ const FixturesAndResults = () => {
                   <div className="export-header">
                     <span style={{ fontFamily: 'Cinzel', color: '#0c1c8c', fontSize: '0.8rem', letterSpacing: '2px', display: 'block' }}>ST. JEROME LEAGUE</span>
                     <h2 style={{ fontFamily: 'Bebas Neue', fontSize: '2.2rem', color: '#0c1c8c', margin: '2px 0 0 0' }}>
-                      {selectedSeason} {selectedMatchday !== 'All' ? `— MATCHDAY ${selectedMatchday}` : '— All Results'}
+                      {selectedSeason} {selectedMatchday !== 'All' ? `— GAMEWEEK ${selectedMatchday}` : '— All Results'}
                     </h2>
                   </div>
                 )}
@@ -901,7 +810,7 @@ const FixturesAndResults = () => {
                 }).map(md => (
                   <div key={md} className="md-section">
                     <div className="md-header">
-                      <span className="md-badge">{isNaN(md) ? md : `Round ${md}`}</span>
+                      <span className="md-badge">{isNaN(md) ? md : `GAMEWEEK ${md}`}</span>
                       <div className="md-meta">
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={15} color="#c59b27"/> {groupedByMatchday[md][0].venue || "Equinox Sports Centre"}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Trophy size={15} color="#c59b27"/> {groupedByMatchday[md][0].date}</span>
@@ -909,7 +818,7 @@ const FixturesAndResults = () => {
                     </div>
 
                     {groupedByMatchday[md].map(match => (
-                      <div key={match.id} className="match-card" onClick={() => setSelectedFixture(match)}>
+                      <div key={match.id} className="match-card">
                         {/* HOME */}
                         <div className="team home">
                           <span className="team-name">{match.homeTeam}</span>
@@ -947,68 +856,6 @@ const FixturesAndResults = () => {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* FIXTURE / RESULT DETAILS MODAL */}
-        {selectedFixture && (
-          <div className="modal-backdrop" onClick={handleBackdropClick}>
-            <div className="modal-container">
-              <button className="close-btn" onClick={() => setSelectedFixture(null)}>
-                <X size={20} color="#0c1c8c" />
-              </button>
-
-              <div className="modal-scroll">
-                <div style={{ background: '#f1f5f9', padding: '38px 20px', textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>
-                  <div className="match-badge-tag" style={{ marginBottom: '15px' }}>
-                    <Calendar size={14} className="color-yellow" />
-                    {selectedFixture.matchday ? `MATCHDAY ${selectedFixture.matchday}`.toUpperCase() : 'LEAGUE MATCH'}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px', margin: '15px 0' }}>
-                    <div style={{ textAlign: 'center', width: '100px' }}>
-                      <img 
-                        src={selectedFixture.homeLogo || teamLogos[selectedFixture.homeTeam] || `https://ui-avatars.com/api/?name=${selectedFixture.homeTeam}&background=f1f5f9&color=0c1c8c`} 
-                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
-                        alt={selectedFixture.homeTeam} 
-                      />
-                      <b style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.homeTeam}</b>
-                    </div>
-
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: '2.1rem', color: '#0c1c8c', letterSpacing: '1px' }}>
-                      {selectedFixture.homeScore !== null && selectedFixture.awayScore !== null 
-                        ? `${selectedFixture.homeScore} - ${selectedFixture.awayScore}` 
-                        : 'VS'}
-                    </div>
-
-                    <div style={{ textAlign: 'center', width: '100px' }}>
-                      <img 
-                        src={selectedFixture.awayLogo || teamLogos[selectedFixture.awayTeam] || `https://ui-avatars.com/api/?name=${selectedFixture.awayTeam}&background=f1f5f9&color=0c1c8c`} 
-                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', background: '#fff', margin: '0 auto 8px' }} 
-                        alt={selectedFixture.awayTeam} 
-                      />
-                      <b style={{ fontSize: '0.82rem', color: '#0f172a', display: 'block', textTransform: 'uppercase' }}>{selectedFixture.awayTeam}</b>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ padding: '28px 30px' }}>
-                  <div className="modal-info-grid">
-                    <div className="modal-info-card">
-                      <Clock size={17} color="#0c1c8c" style={{ marginBottom: '6px' }} />
-                      <span className="modal-info-label">Date & Time</span>
-                      <b className="modal-info-value">{selectedFixture.date} • {selectedFixture.time}</b>
-                    </div>
-                    
-                    <div className="modal-info-card">
-                      <MapPin size={17} color="#0c1c8c" style={{ marginBottom: '6px' }} />
-                      <span className="modal-info-label">Venue</span>
-                      <b className="modal-info-value">{selectedFixture.venue}</b>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

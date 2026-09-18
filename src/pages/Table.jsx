@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where } from 'firebase/firestore';
 import { Trophy, Loader2, Shield, User, ChevronDown } from 'lucide-react';
 
 import heroImg from '../assets/top.jpg';
+
+const allSeasonsList = ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5", "Season 6", "Season 7", "Season 8", "Season 9", "Season 10"];
 
 const Table = () => {
   const [leagueData, setLeagueData] = useState([]);
   const [topScorers, setTopScorers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentSeason, setCurrentSeason] = useState("Season 7");
   const [selectedSeason, setSelectedSeason] = useState("Season 7");
 
-  // Dynamic seasons list up to Season 7, built to scale for future seasons
-  const seasons = Array.from({ length: 7 }, (_, i) => `Season ${i + 1}`);
+  useEffect(() => {
+    const fetchCurrentSeason = async () => {
+      try {
+        const snap = await getDoc(doc(db, "settings", "leagueConfig"));
+        if (snap.exists() && snap.data().currentSeason) {
+          const active = snap.data().currentSeason;
+          setCurrentSeason(active);
+          setSelectedSeason(active);
+        }
+      } catch (error) {
+        console.error("Error fetching current season:", error);
+      }
+    };
+    fetchCurrentSeason();
+  }, []);
 
   useEffect(() => {
     const generateTableData = async () => {
@@ -37,27 +53,31 @@ const Table = () => {
           }
         });
 
-        // Fetch completed fixtures for the selected season
+        // FIX: Match completed fixtures case-insensitively
         const fixturesQuery = query(
           collection(db, "fixtures"),
-          where("season", "==", selectedSeason),
-          where("status", "==", "completed")
+          where("season", "==", selectedSeason)
         );
         const fixturesSnapshot = await getDocs(fixturesQuery);
+
+        // Filter completed matches client-side (handles 'completed', 'Completed', 'ft', 'FT')
+        const completedFixtures = fixturesSnapshot.docs.filter(d => {
+          const status = (d.data().status || '').toLowerCase();
+          return status === 'completed' || status === 'ft';
+        });
 
         let sortedTeamsResult = [];
         let sortedScorersResult = [];
 
-        if (!fixturesSnapshot.empty) {
-          // ---- Season has real fixture records: compute standings match-by-match ----
+        if (completedFixtures.length > 0) {
+          // Live season with results: calculate from fixture data
           const scorersMap = {};
 
-          fixturesSnapshot.docs.forEach(doc => {
+          completedFixtures.forEach(doc => {
             const match = doc.data();
             const homeTeamName = match.homeTeam ? match.homeTeam.trim() : '';
             const awayTeamName = match.awayTeam ? match.awayTeam.trim() : '';
 
-            // Dynamically add teams if they existed in past seasons but aren't in the main 'clubs' collection anymore
             [homeTeamName, awayTeamName].forEach(teamName => {
               if (teamName && !teamsMap[teamName]) {
                 teamsMap[teamName] = {
@@ -99,7 +119,8 @@ const Table = () => {
 
             if (match.scorers && Array.isArray(match.scorers)) {
               match.scorers.forEach(scorer => {
-                const playerName = scorer.name || scorer.playerName;
+                // FIX: Handle both old format (scorer.name) and new format
+                const playerName = scorer.name || scorer.playerName || scorer.playerId;
                 const playerTeam = scorer.team || scorer.club;
                 const playerPhoto = scorer.photoUrl || scorer.photo || null;
                 const goalsScored = Number(scorer.goals || 1);
@@ -122,12 +143,23 @@ const Table = () => {
             }
           });
 
-          let sortedTeams = Object.values(teamsMap).filter(team => team.p > 0 || selectedSeason === "Season 7");
+          // FIX: When no results yet for the current season, show all clubs alphabetically.
+          // When results exist, show teams that have played (+ all registered teams for current season).
+          let sortedTeams = Object.values(teamsMap).filter(team =>
+            team.p > 0 || selectedSeason === currentSeason
+          );
 
+          // FIX: Sort alphabetically first, then by points/GD/GF so teams with
+          // equal stats (0 pts, 0 played) appear in a clean A-Z order
           sortedTeams.sort((a, b) => {
+            // Primary: points descending
             if (b.pts !== a.pts) return b.pts - a.pts;
+            // Secondary: goal difference descending
             if (b.gd !== a.gd) return b.gd - a.gd;
-            return b.gf - a.gf;
+            // Tertiary: goals for descending
+            if (b.gf !== a.gf) return b.gf - a.gf;
+            // Final tiebreaker: alphabetical by name (so 0-0-0 teams sort nicely)
+            return a.name.localeCompare(b.name);
           });
 
           sortedTeamsResult = sortedTeams;
@@ -137,7 +169,7 @@ const Table = () => {
             .slice(0, 10);
 
         } else {
-          // ---- Legacy season: no fixture docs, read stats saved directly on clubs + topScorers ----
+          // No completed fixture docs — check for legacy stats on clubs
           const legacyTeams = Object.values(clubsData)
             .map(club => {
               const seasonStats = club.stats && club.stats[selectedSeason];
@@ -161,17 +193,26 @@ const Table = () => {
             })
             .filter(Boolean);
 
-          legacyTeams.sort((a, b) => {
-            if (a.position != null && b.position != null && a.position !== b.position) {
-              return a.position - b.position;
-            }
-            if (b.pts !== a.pts) return b.pts - a.pts;
-            if (b.gd !== a.gd) return b.gd - a.gd;
-            return b.gf - a.gf;
-          });
+          if (legacyTeams.length > 0) {
+            // Legacy season: sort by saved position, then pts, then alphabetical
+            legacyTeams.sort((a, b) => {
+              if (a.position != null && b.position != null && a.position !== b.position) {
+                return a.position - b.position;
+              }
+              if (b.pts !== a.pts) return b.pts - a.pts;
+              if (b.gd !== a.gd) return b.gd - a.gd;
+              return a.name.localeCompare(b.name);
+            });
+            sortedTeamsResult = legacyTeams;
+          } else {
+            // Completely new season with no data yet: show all registered clubs alphabetically
+            const allClubs = Object.values(teamsMap)
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(t => ({ ...t }));
+            sortedTeamsResult = allClubs;
+          }
 
-          sortedTeamsResult = legacyTeams;
-
+          // Top scorers from dedicated collection
           const scorersQuery = query(collection(db, "topScorers"), where("season", "==", selectedSeason));
           const scorersSnap = await getDocs(scorersQuery);
           sortedScorersResult = scorersSnap.docs
@@ -199,7 +240,7 @@ const Table = () => {
     };
 
     generateTableData();
-  }, [selectedSeason]);
+  }, [selectedSeason, currentSeason]);
 
   return (
     <div className="table-page">
@@ -491,6 +532,18 @@ const Table = () => {
         }
 
         .legend b { color: #0c1c8c; }
+
+        .no-results-banner {
+          text-align: center;
+          padding: 12px 20px;
+          background: rgba(12, 28, 140, 0.04);
+          border: 1px dashed rgba(12, 28, 140, 0.2);
+          border-radius: 12px;
+          color: #64748b;
+          font-size: 0.8rem;
+          font-weight: 600;
+          margin-bottom: 18px;
+        }
       `}</style>
 
       <div className="container">
@@ -515,9 +568,9 @@ const Table = () => {
               className="season-dropdown"
               aria-label="Select Season"
             >
-              {seasons.map(s => (
+              {allSeasonsList.map(s => (
                 <option key={s} value={s}>
-                  {s} {s === "Season 7" ? "(Current)" : ""}
+                  {s} {s === currentSeason ? "(Current)" : ""}
                 </option>
               ))}
             </select>
@@ -538,53 +591,61 @@ const Table = () => {
               No matches or standings recorded for {selectedSeason} yet.
             </div>
           ) : (
-            <div className="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="w-pos">Pos</th>
-                    <th className="w-team">Club</th>
-                    <th>P</th>
-                    <th>W</th>
-                    <th>D</th>
-                    <th>L</th>
-                    <th>GF</th>
-                    <th>GA</th>
-                    <th>GD</th>
-                    <th className="w-pts">Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leagueData.map((team) => (
-                    <tr key={team.id} className={team.pos === 1 ? 'leader' : ''}>
-                      <td className="w-pos">{team.pos}</td>
-                      <td className="w-team">
-                        <div className="col-team-cell">
-                          <div className="team-logo-container">
-                            {team.logo ? (
-                              <img src={team.logo} className="team-logo" crossOrigin="anonymous" alt=""/>
-                            ) : (
-                              <Shield size={14} color="#0c1c8c"/>
-                            )}
-                          </div>
-                          <span className="team-name-text">{team.name}</span>
-                        </div>
-                      </td>
-                      <td>{team.p}</td>
-                      <td>{team.w}</td>
-                      <td>{team.d}</td>
-                      <td>{team.l}</td>
-                      <td>{team.gf}</td>
-                      <td>{team.ga}</td>
-                      <td style={{ color: team.gd > 0 ? '#10b981' : team.gd < 0 ? '#ef4444' : 'inherit', fontWeight: 700 }}>
-                        {team.gd > 0 ? `+${team.gd}` : team.gd}
-                      </td>
-                      <td className="w-pts">{team.pts}</td>
+            <>
+              {/* Show a banner when no results have been played yet */}
+              {leagueData.every(t => t.p === 0) && (
+                <div className="no-results-banner">
+                  Season hasn't kicked off yet — teams listed alphabetically. Table updates automatically once results are recorded.
+                </div>
+              )}
+              <div className="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="w-pos">Pos</th>
+                      <th className="w-team">Club</th>
+                      <th>P</th>
+                      <th>W</th>
+                      <th>D</th>
+                      <th>L</th>
+                      <th>GF</th>
+                      <th>GA</th>
+                      <th>GD</th>
+                      <th className="w-pts">Pts</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {leagueData.map((team) => (
+                      <tr key={team.id} className={team.pos === 1 && team.pts > 0 ? 'leader' : ''}>
+                        <td className="w-pos">{team.pos}</td>
+                        <td className="w-team">
+                          <div className="col-team-cell">
+                            <div className="team-logo-container">
+                              {team.logo ? (
+                                <img src={team.logo} className="team-logo" crossOrigin="anonymous" alt=""/>
+                              ) : (
+                                <Shield size={14} color="#0c1c8c"/>
+                              )}
+                            </div>
+                            <span className="team-name-text">{team.name}</span>
+                          </div>
+                        </td>
+                        <td>{team.p}</td>
+                        <td>{team.w}</td>
+                        <td>{team.d}</td>
+                        <td>{team.l}</td>
+                        <td>{team.gf}</td>
+                        <td>{team.ga}</td>
+                        <td style={{ color: team.gd > 0 ? '#10b981' : team.gd < 0 ? '#ef4444' : 'inherit', fontWeight: 700 }}>
+                          {team.gd > 0 ? `+${team.gd}` : team.gd}
+                        </td>
+                        <td className="w-pts">{team.pts}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
