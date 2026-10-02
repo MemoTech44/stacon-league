@@ -7,16 +7,21 @@ import {
   deleteDoc, 
   doc, 
   serverTimestamp,
-  updateDoc 
+  updateDoc,
+  writeBatch,
+  query,
+  where
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Trash2, Shield, Plus, Loader2, Edit3, X } from 'lucide-react';
+import { Trash2, Shield, Plus, Loader2, Edit3, X, AlertTriangle } from 'lucide-react';
 
 const TeamManager = () => {
   const [teams, setTeams] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [originalTeamName, setOriginalTeamName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [renameStatus, setRenameStatus] = useState('');
   
   // Form State
   const [teamName, setTeamName] = useState('');
@@ -40,7 +45,9 @@ const TeamManager = () => {
 
   const handleEditClick = (team) => {
     setEditingId(team.id);
-    setTeamName(team.teamName || team.name || ''); // Handles both old and new data models gracefully
+    const existingName = team.teamName || team.name || '';
+    setOriginalTeamName(existingName); // remembered so we can detect a rename on save
+    setTeamName(existingName); // Handles both old and new data models gracefully
     setExistingLogoUrl(team.logoUrl || '');
     setChairman(team.chairman || '');
     setCoach(team.coach || '');
@@ -54,17 +61,76 @@ const TeamManager = () => {
     setTeamName('');
     setLogo(null);
     setEditingId(null);
+    setOriginalTeamName('');
     setExistingLogoUrl('');
     setChairman('');
     setCoach('');
     setCaptain('');
     setDescription('');
     setIsAdding(false);
+    setRenameStatus('');
+  };
+
+  // When a club's name changes, every fixture that already stores the OLD name
+  // as plain text (homeTeam/awayTeam/scorers) and every topScorers record tied
+  // to the old club name must be updated too — otherwise the table, fixtures
+  // and results pages end up treating "old name" and "new name" as two
+  // different clubs.
+  const cascadeTeamRename = async (oldName, newName) => {
+    const batch = writeBatch(db);
+    let affected = 0;
+
+    const renameScorers = (scorers) => {
+      if (!Array.isArray(scorers)) return scorers;
+      return scorers.map(s => {
+        if (s.team === oldName || s.club === oldName) {
+          return {
+            ...s,
+            ...(s.team !== undefined ? { team: newName } : {}),
+            ...(s.club !== undefined ? { club: newName } : {})
+          };
+        }
+        return s;
+      });
+    };
+
+    // Fixtures where this club played at home
+    const homeSnap = await getDocs(query(collection(db, "fixtures"), where("homeTeam", "==", oldName)));
+    homeSnap.docs.forEach(d => {
+      const data = d.data();
+      const updates = { homeTeam: newName };
+      if (Array.isArray(data.scorers)) updates.scorers = renameScorers(data.scorers);
+      batch.update(doc(db, "fixtures", d.id), updates);
+      affected += 1;
+    });
+
+    // Fixtures where this club played away
+    const awaySnap = await getDocs(query(collection(db, "fixtures"), where("awayTeam", "==", oldName)));
+    awaySnap.docs.forEach(d => {
+      const data = d.data();
+      const updates = { awayTeam: newName };
+      if (Array.isArray(data.scorers)) updates.scorers = renameScorers(data.scorers);
+      batch.update(doc(db, "fixtures", d.id), updates);
+      affected += 1;
+    });
+
+    // Legacy top-scorer records (from Setup Past Seasons) tied to the old club name
+    const scorersSnap = await getDocs(query(collection(db, "topScorers"), where("club", "==", oldName)));
+    scorersSnap.docs.forEach(d => {
+      batch.update(doc(db, "topScorers", d.id), { club: newName });
+      affected += 1;
+    });
+
+    if (affected > 0) {
+      await batch.commit();
+    }
+    return affected;
   };
 
   const handleSaveTeam = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setRenameStatus('');
 
     try {
       let logoUrl = existingLogoUrl;
@@ -75,9 +141,11 @@ const TeamManager = () => {
         logoUrl = await getDownloadURL(logoRef);
       }
 
+      const trimmedNewName = teamName.trim();
+
       const teamPayload = {
-        teamName, // Consistent property name for sorting and rendering
-        name: teamName, // Kept for backwards compatibility with other pages if needed
+        teamName: trimmedNewName, // Consistent property name for sorting and rendering
+        name: trimmedNewName, // Kept for backwards compatibility with other pages if needed
         logoUrl,
         chairman,
         coach,
@@ -88,6 +156,16 @@ const TeamManager = () => {
 
       if (editingId) {
         await updateDoc(doc(db, "clubs", editingId), teamPayload);
+
+        const trimmedOldName = (originalTeamName || '').trim();
+        if (trimmedOldName && trimmedNewName && trimmedOldName !== trimmedNewName) {
+          const affected = await cascadeTeamRename(trimmedOldName, trimmedNewName);
+          setRenameStatus(
+            affected > 0
+              ? `Renamed "${trimmedOldName}" to "${trimmedNewName}" across ${affected} existing record${affected === 1 ? '' : 's'} (fixtures & scorers).`
+              : `Club renamed. No past fixtures or scorer records referenced the old name.`
+          );
+        }
       } else {
         await addDoc(collection(db, "clubs"), {
           ...teamPayload,
@@ -97,8 +175,23 @@ const TeamManager = () => {
         });
       }
 
-      resetForm();
       fetchTeams();
+
+      // Keep the rename confirmation visible briefly instead of wiping the form instantly
+      if (editingId && originalTeamName.trim() !== trimmedNewName) {
+        setTeamName('');
+        setLogo(null);
+        setEditingId(null);
+        setOriginalTeamName('');
+        setExistingLogoUrl('');
+        setChairman('');
+        setCoach('');
+        setCaptain('');
+        setDescription('');
+        setIsAdding(false);
+      } else {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error saving team:", error);
       alert("Failed to save team details.");
@@ -248,6 +341,32 @@ const TeamManager = () => {
           transition: 0.2s; 
         }
 
+        .rename-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          background: rgba(250, 204, 21, 0.08);
+          border: 1px solid rgba(250, 204, 21, 0.25);
+          color: #facc15;
+          padding: 10px 12px;
+          border-radius: 10px;
+          font-size: 0.72rem;
+          font-weight: 600;
+          line-height: 1.4;
+          margin-bottom: 14px;
+        }
+
+        .rename-success {
+          background: rgba(34, 197, 94, 0.12);
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          color: #4ade80;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          margin-bottom: 20px;
+        }
+
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
           to { opacity: 1; transform: translateY(0); }
@@ -284,12 +403,23 @@ const TeamManager = () => {
         </button>
       </div>
 
+      {renameStatus && (
+        <div className="rename-success">{renameStatus}</div>
+      )}
+
       {isAdding && (
         <form className="add-team-form" onSubmit={handleSaveTeam}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <div style={{ background: 'rgba(250, 204, 21, 0.15)', border: '1px solid rgba(250, 204, 21, 0.3)', padding: '8px', borderRadius: '10px' }}><Shield color="#facc15" size={20} /></div>
             <h3 style={{ margin: 0, color: '#facc15', fontWeight: 900, fontSize: '1rem' }}>{editingId ? 'UPDATE CLUB PROFILE' : 'NEW CLUB REGISTRATION'}</h3>
           </div>
+
+          {editingId && (
+            <div className="rename-note">
+              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>Changing the club name here will automatically update it across every existing fixture, result and scorer record — you don't need to fix those manually.</span>
+            </div>
+          )}
           
           <div className="form-row">
             <div className="input-group">

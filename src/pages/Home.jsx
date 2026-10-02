@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where } from 'firebase/firestore';
 import { ArrowRight, Shield, Heart, Users, Calendar, Trophy, Activity, Image as ImageIcon, Award } from 'lucide-react';
 
 // Assets imported from project directory
@@ -61,12 +61,24 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch News
+        // Determine the league-wide current season — the same settings doc
+        // FixturesManager's "Set as Current Season" control writes to.
+        let activeSeason = "Season 7";
+        try {
+          const seasonSnap = await getDoc(doc(db, "settings", "leagueConfig"));
+          if (seasonSnap.exists() && seasonSnap.data().currentSeason) {
+            activeSeason = seasonSnap.data().currentSeason;
+          }
+        } catch (seasonErr) {
+          console.error("Error fetching current season:", seasonErr);
+        }
+
+        // ---- Fetch News ----
         const newsSnap = await getDocs(collection(db, "news"));
         const fetchedNews = newsSnap.docs.map(doc => {
           const data = doc.data();
-          return { 
-            id: doc.id, 
+          return {
+            id: doc.id,
             ...data,
             displayDate: data.date || "Latest"
           };
@@ -78,23 +90,129 @@ const Home = () => {
         });
         setNews(fetchedNews.slice(0, 2));
 
-        // Fetch Standings / Table (Top 5)
-        const tableSnap = await getDocs(collection(db, "table"));
-        const fetchedTable = tableSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        fetchedTable.sort((a, b) => (b.points || 0) - (a.points || 0) || (b.gd || 0) - (b.gd || 0));
-        setStandings(fetchedTable.slice(0, 5));
+        // ---- Fetch clubs (needed for both standings and legacy fallback) ----
+        const clubsSnap = await getDocs(collection(db, "clubs"));
+        const clubsData = {};
+        const teamsMap = {};
+        clubsSnap.docs.forEach(d => {
+          const data = d.data();
+          const teamName = data.name ? data.name.trim() : '';
+          if (teamName) {
+            clubsData[teamName] = { id: d.id, ...data };
+            teamsMap[teamName] = {
+              id: d.id,
+              name: teamName,
+              logo: data.logoUrl || data.logo || null,
+              p: 0, pts: 0, gf: 0, ga: 0, gd: 0
+            };
+          }
+        });
 
-        // Fetch Fixtures
-        const fixturesSnap = await getDocs(collection(db, "fixtures"));
-        const fetchedFixtures = fixturesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setFixtures(fetchedFixtures.slice(0, 3));
+        // ---- Fetch this season's fixtures (powers both standings and results) ----
+        const fixturesQuery = query(collection(db, "fixtures"), where("season", "==", activeSeason));
+        const fixturesSnap = await getDocs(fixturesQuery);
+        const seasonFixtures = fixturesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Fetch Results
-        const resultsSnap = await getDocs(collection(db, "results"));
-        const fetchedResults = resultsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setResults(fetchedResults.slice(0, 3));
+        const completedFixtures = seasonFixtures.filter(f => {
+          const status = (f.status || '').toLowerCase();
+          return status === 'completed' || status === 'ft';
+        });
 
-        // Fetch Sponsors & Partners
+        // ---- Build standings from completed fixtures (same logic as the Table page) ----
+        let standingsResult = [];
+        if (completedFixtures.length > 0) {
+          completedFixtures.forEach(match => {
+            const homeTeamName = match.homeTeam ? match.homeTeam.trim() : '';
+            const awayTeamName = match.awayTeam ? match.awayTeam.trim() : '';
+
+            [homeTeamName, awayTeamName].forEach(teamName => {
+              if (teamName && !teamsMap[teamName]) {
+                teamsMap[teamName] = { id: teamName, name: teamName, logo: null, p: 0, pts: 0, gf: 0, ga: 0, gd: 0 };
+              }
+            });
+
+            const home = teamsMap[homeTeamName];
+            const away = teamsMap[awayTeamName];
+
+            if (home && away) {
+              const hScore = Number(match.homeScore) || 0;
+              const aScore = Number(match.awayScore) || 0;
+
+              home.p += 1; away.p += 1;
+              home.gf += hScore; home.ga += aScore;
+              away.gf += aScore; away.ga += hScore;
+
+              if (hScore > aScore) { home.pts += 3; }
+              else if (aScore > hScore) { away.pts += 3; }
+              else { home.pts += 1; away.pts += 1; }
+
+              home.gd = home.gf - home.ga;
+              away.gd = away.gf - away.ga;
+            }
+          });
+
+          standingsResult = Object.values(teamsMap).sort((a, b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            if (b.gd !== a.gd) return b.gd - a.gd;
+            if (b.gf !== a.gf) return b.gf - a.gf;
+            return a.name.localeCompare(b.name);
+          });
+        } else {
+          // No fixtures recorded yet for this season — fall back to legacy
+          // stats saved directly on clubs, if this "current season" happens
+          // to have any; otherwise just list clubs alphabetically at 0.
+          const legacyTeams = Object.values(clubsData)
+            .map(club => {
+              const seasonStats = club.stats && club.stats[activeSeason];
+              if (!seasonStats) return null;
+              const gf = Number(seasonStats.gf || 0);
+              const ga = Number(seasonStats.ga || 0);
+              return {
+                id: club.id,
+                name: (club.name || '').trim(),
+                logo: club.logoUrl || club.logo || null,
+                p: Number(seasonStats.played || 0),
+                pts: Number(seasonStats.points || 0),
+                gf, ga, gd: gf - ga,
+                position: seasonStats.position ? Number(seasonStats.position) : null
+              };
+            })
+            .filter(Boolean);
+
+          if (legacyTeams.length > 0) {
+            legacyTeams.sort((a, b) => {
+              if (a.position != null && b.position != null && a.position !== b.position) return a.position - b.position;
+              if (b.pts !== a.pts) return b.pts - a.pts;
+              if (b.gd !== a.gd) return b.gd - a.gd;
+              return a.name.localeCompare(b.name);
+            });
+            standingsResult = legacyTeams;
+          } else {
+            standingsResult = Object.values(teamsMap).sort((a, b) => a.name.localeCompare(b.name));
+          }
+        }
+
+        setStandings(standingsResult.slice(0, 4).map((t, i) => ({ ...t, position: i + 1 })));
+
+        // ---- Upcoming fixtures: next 3, soonest first ----
+        const upcoming = seasonFixtures
+          .filter(f => (f.status || '').toLowerCase() === 'upcoming')
+          .sort((a, b) => {
+            const dateCompare = (a.date || '').localeCompare(b.date || '');
+            if (dateCompare !== 0) return dateCompare;
+            return (a.time || '').localeCompare(b.time || '');
+          });
+        setFixtures(upcoming.slice(0, 3));
+
+        // ---- Latest results: last 5 completed matches, most recent first ----
+        const latestResults = [...completedFixtures].sort((a, b) => {
+          const dateCompare = (b.date || '').localeCompare(a.date || '');
+          if (dateCompare !== 0) return dateCompare;
+          return (b.time || '').localeCompare(a.time || '');
+        });
+        setResults(latestResults.slice(0, 3));
+
+        // ---- Fetch Sponsors & Partners ----
         const sponsorsSnap = await getDocs(collection(db, "sponsors"));
         const fetchedSponsors = sponsorsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setSponsors(fetchedSponsors);
@@ -610,7 +728,7 @@ const Home = () => {
       <section style={{ padding: '10px 4% 60px', maxWidth: '1280px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
           
-          {/* STANDINGS */}
+          {/* STANDINGS — top 4 teams of the current season */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
@@ -644,9 +762,9 @@ const Home = () => {
                       {standings.map((team, index) => (
                         <tr key={team.id || index}>
                           <td style={{ fontWeight: 700, color: index < 3 ? '#0c1c8c' : '#475569' }}>{team.position || index + 1}</td>
-                          <td style={{ fontWeight: 600 }}>{team.teamName || team.name || 'Team'}</td>
-                          <td style={{ textAlign: 'center' }}>{team.played ?? team.p ?? 0}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: '#0c1c8c' }}>{team.points ?? team.pts ?? 0}</td>
+                          <td style={{ fontWeight: 600 }}>{team.name || 'Team'}</td>
+                          <td style={{ textAlign: 'center' }}>{team.p ?? 0}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 700, color: '#0c1c8c' }}>{team.pts ?? 0}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -656,7 +774,7 @@ const Home = () => {
             </div>
           </div>
 
-          {/* FIXTURES */}
+          {/* FIXTURES — next 3 upcoming matches of the current season */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
@@ -695,7 +813,7 @@ const Home = () => {
             </div>
           </div>
 
-          {/* RESULTS */}
+          {/* RESULTS — last 5 completed matches of the current season */}
           <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
@@ -819,7 +937,7 @@ const Home = () => {
               <div key={sponsor.id} className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <div style={{ width: '80px', height: '80px', borderRadius: '20px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', overflow: 'hidden', padding: '10px' }}>
                   <img 
-                    src={sponsor.logo || sponsor.imageUrl || logoImg} 
+                    src={sponsor.logoUrl || sponsor.logo || sponsor.imageUrl || logoImg} 
                     alt={sponsor.name || sponsor.companyName || 'Sponsor Logo'} 
                     style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                   />
