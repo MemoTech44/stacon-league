@@ -26,7 +26,7 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select Option" 
   const selectedOption = options.find(opt => opt.id === value || opt.name === value);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', zIndex: isOpen ? 1000 : 1 }}>
       <div 
         onClick={() => setIsOpen(!isOpen)} 
         className="custom-input" 
@@ -58,10 +58,10 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select Option" 
           background: '#0b1329',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
           maxHeight: '200px',
           overflowY: 'auto',
-          zIndex: 100,
+          zIndex: 9999,
           padding: '4px'
         }}>
           <div
@@ -112,7 +112,7 @@ const CustomSelect = ({ value, onChange, options, placeholder = "Select Option" 
   );
 };
 
-// Generic Custom Dropdown for Matchdays
+// Generic Custom Dropdown for Matchdays with high stacking context
 const DropdownSelector = ({ label, value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -128,7 +128,7 @@ const DropdownSelector = ({ label, value, onChange, options }) => {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: '150px' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: '150px', zIndex: isOpen ? 1000 : 10 }}>
       {label && <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', marginBottom: '6px' }}>{label}</span>}
       <div 
         onClick={() => setIsOpen(!isOpen)} 
@@ -162,10 +162,10 @@ const DropdownSelector = ({ label, value, onChange, options }) => {
           background: '#0b1329',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.7)',
+          boxShadow: '0 15px 40px rgba(0,0,0,0.9)',
           maxHeight: '220px',
           overflowY: 'auto',
-          zIndex: 100,
+          zIndex: 99999,
           padding: '4px'
         }}>
           {options.map((opt) => (
@@ -209,7 +209,6 @@ const ResultsManager = () => {
   // Tabs & Settings
   const [activeTab, setActiveTab] = useState("fixtures");
   
-  // FIX 1: Start currentLiveSeason as null so we know when it's loaded
   const [currentLiveSeason, setCurrentLiveSeason] = useState(null);
   const [selectedMatchday, setSelectedMatchday] = useState("1");
   const [availableMatchdays, setAvailableMatchdays] = useState(["1", "2", "3", "4", "Gala"]);
@@ -234,12 +233,10 @@ const ResultsManager = () => {
 
   const allSeasonsList = ["Season 1", "Season 2", "Season 3", "Season 4", "Season 5", "Season 6", "Season 7", "Season 8", "Season 9", "Season 10"];
 
-  // FIX 2: Fetch settings first, THEN trigger data load via useEffect on currentLiveSeason
   useEffect(() => {
     fetchSystemSettings();
   }, []);
 
-  // FIX 3: Only fetch fixtures once currentLiveSeason is actually set
   useEffect(() => {
     if (!currentLiveSeason) return;
     if (activeTab === "fixtures" || activeTab === "add_matchday") {
@@ -248,7 +245,7 @@ const ResultsManager = () => {
       fetchClubsAndPlayers();
       fetchLegacySeasonData(legacySeason);
     }
-  }, [selectedMatchday, activeTab, currentLiveSeason]); // added currentLiveSeason as dependency
+  }, [selectedMatchday, activeTab, currentLiveSeason]);
 
   useEffect(() => {
     if (activeTab === "legacy_setup") {
@@ -267,7 +264,7 @@ const ResultsManager = () => {
       }
     } catch (error) {
       console.error("Error fetching system settings:", error);
-      setCurrentLiveSeason("Season 7"); // fallback so the app doesn't hang
+      setCurrentLiveSeason("Season 7");
     }
   };
 
@@ -276,11 +273,9 @@ const ResultsManager = () => {
     setFetching(true);
     setDebugInfo(null);
     try {
-      // Step 1: Fetch ALL fixtures (no filter) so we can diagnose mismatches
       const allSnap = await getDocs(collection(db, "fixtures"));
       const allFixtures = allSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Build a debug summary: unique seasons & matchdays actually in Firestore
       const uniqueSeasons = [...new Set(allFixtures.map(f => f.season))];
       const forThisSeason = allFixtures.filter(f => f.season === currentLiveSeason);
       const uniqueMatchdays = [...new Set(forThisSeason.map(f => String(f.matchday)))];
@@ -294,7 +289,6 @@ const ResultsManager = () => {
         currentLiveSeason,
       });
 
-      // Step 2: Filter to the current season and selected matchday client-side
       const fetchedFixtures = forThisSeason
         .filter(f => String(f.matchday) === String(selectedMatchday))
         .sort((a, b) => {
@@ -306,7 +300,6 @@ const ResultsManager = () => {
 
       setFixtures(fetchedFixtures);
 
-      // Build available matchdays from real Firestore data for this season
       const defaultMDs = ["1", "2", "3", "4", "Gala"];
       const combined = Array.from(new Set([...defaultMDs, ...uniqueMatchdays]));
       combined.sort((a, b) => {
@@ -442,14 +435,12 @@ const ResultsManager = () => {
     try {
       const fixtureRef = doc(db, "fixtures", fixture.id);
 
-      // FIX 5: Build clean scorer objects to store — name + minute (+ playerId if present)
       const cleanScorers = matchScorers.map(s => ({
-        name: s.name || s.playerId || '',   // playerId holds the player name from CustomSelect
+        name: s.name || s.playerId || '',
         playerId: s.playerId || '',
         minute: s.minute || ''
       }));
 
-      // FIX 6: Use lowercase 'completed' consistently everywhere
       batch.update(fixtureRef, { 
         status: 'completed',
         homeScore: Number(homeScore),
@@ -458,8 +449,6 @@ const ResultsManager = () => {
         adminNote: adminNote
       });
 
-      // FIX 7: Check against BOTH 'completed' and 'Completed' (case-insensitive)
-      // so re-submitting an already-completed fixture doesn't double-count stats
       const isAlreadyCompleted = fixture.status && fixture.status.toLowerCase() === 'completed';
 
       if (!isAlreadyCompleted) {
@@ -490,25 +479,19 @@ const ResultsManager = () => {
           });
         }
 
-        // FIX 8: Update top scorers collection per player name
         for (const s of cleanScorers) {
           if (!s.name) continue;
 
-          // Find the player doc by name to get their club
           const playerDoc = players.find(p =>
             (p.name || p.username || '').toLowerCase() === s.name.toLowerCase()
           );
 
-          // Increment goals on the player doc if we have their ID
           if (playerDoc) {
             batch.update(doc(db, "players", playerDoc.id), {
               [`goals.${currentLiveSeason}`]: increment(1)
             });
           }
 
-          // Upsert into topScorers collection
-          // We query after batch, so do a separate upsert approach via a deterministic doc ID
-          // Use a stable key: season_playerName (lowercased, spaces replaced)
           const scorerDocId = `${currentLiveSeason.replace(/\s/g, '_')}_${s.name.replace(/\s/g, '_')}`.toLowerCase();
           const scorerRef = doc(db, "topScorers", scorerDocId);
           const scorerSnap = await getDoc(scorerRef);
@@ -544,70 +527,6 @@ const ResultsManager = () => {
     }
   };
 
-  const handleSaveLegacySeason = async () => {
-    setLoading(true);
-    const batch = writeBatch(db);
-
-    try {
-      for (const item of legacyStandings) {
-        if (!item.clubName) continue;
-        const targetClub = clubs.find(c => c.name.toLowerCase() === item.clubName.toLowerCase());
-        
-        const statPayload = {
-          played: Number(item.played || 0),
-          won: Number(item.won || 0),
-          drawn: Number(item.drawn || 0),
-          lost: Number(item.lost || 0),
-          points: Number(item.points || 0),
-          gf: Number(item.gf || 0),
-          ga: Number(item.ga || 0),
-          position: Number(item.position || 0)
-        };
-
-        if (targetClub) {
-          batch.update(doc(db, "clubs", targetClub.id), {
-            [`stats.${legacySeason}`]: statPayload
-          });
-        } else {
-          const newClubRef = doc(collection(db, "clubs"));
-          batch.set(newClubRef, {
-            name: item.clubName,
-            stats: {
-              [legacySeason]: statPayload
-            }
-          });
-        }
-      }
-
-      const existingScorersSnap = await getDocs(
-        query(collection(db, "topScorers"), where("season", "==", legacySeason))
-      );
-      existingScorersSnap.docs.forEach(d => batch.delete(doc(db, "topScorers", d.id)));
-
-      for (const scorer of legacyScorers) {
-        if (!scorer.name) continue;
-        const scorerRef = doc(collection(db, "topScorers"));
-        batch.set(scorerRef, {
-          name: scorer.name,
-          club: scorer.club,
-          goals: Number(scorer.goals || 0),
-          appearances: Number(scorer.appearances || 0),
-          season: legacySeason
-        });
-      }
-
-      await batch.commit();
-      alert(`Successfully saved historical data and final standings for ${legacySeason}!`);
-      fetchLegacySeasonData(legacySeason);
-    } catch (error) {
-      console.error("Error saving legacy season:", error);
-      alert("Failed to save legacy season data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Show loading state while season config is being fetched
   if (!currentLiveSeason) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px', color: '#94a3b8' }}>
@@ -639,6 +558,8 @@ const ResultsManager = () => {
           transition: all 0.2s ease;
           width: 100%;
           box-sizing: border-box;
+          position: relative;
+          z-index: 1;
         }
 
         .completed-card {
@@ -778,7 +699,6 @@ const ResultsManager = () => {
             </p>
           </div>
 
-          {/* Select Legacy Season */}
           <div style={{ marginBottom: '20px', maxWidth: '300px' }}>
             <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', marginBottom: '6px' }}>Select Season to Configure</span>
             <select 
@@ -789,374 +709,123 @@ const ResultsManager = () => {
               {allSeasonsList.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-
-          {/* SECTION 1: Team Standings */}
-          <div style={{ marginBottom: '30px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Team Standings & Stats ({legacySeason})
-              </span>
-              <button 
-                onClick={() => setLegacyStandings([...legacyStandings, { clubName: '', position: legacyStandings.length + 1, played: 0, won: 0, drawn: 0, lost: 0, points: 0, gf: 0, ga: 0 }])}
-                style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <Plus size={14}/> Add Team Entry
-              </button>
-            </div>
-
-            {legacyStandings.map((item, idx) => (
-              <div key={idx} style={{ background: '#0b1329', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Club Name</span>
-                    <CustomSelect 
-                      value={item.clubName}
-                      onChange={(val) => {
-                        const copy = [...legacyStandings];
-                        copy[idx].clubName = val;
-                        setLegacyStandings(copy);
-                      }}
-                      options={clubs}
-                      placeholder="Select Club"
-                    />
-                  </div>
-                  {[
-                    { label: 'Position', key: 'position' },
-                    { label: 'Played', key: 'played' },
-                    { label: 'Won', key: 'won' },
-                    { label: 'Drawn', key: 'drawn' },
-                    { label: 'Lost', key: 'lost' },
-                    { label: 'Points', key: 'points' },
-                    { label: 'Goals For', key: 'gf' },
-                    { label: 'Goals Agst', key: 'ga' },
-                  ].map(({ label, key }) => (
-                    <div key={key}>
-                      <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>{label}</span>
-                      <input 
-                        type="number" 
-                        value={item[key]} 
-                        onChange={e => {
-                          const copy = [...legacyStandings];
-                          copy[idx][key] = e.target.value;
-                          setLegacyStandings(copy);
-                        }}
-                        className="custom-input"
-                        style={{ textAlign: 'center', ...(key === 'points' ? { color: '#facc15', fontWeight: 'bold' } : {}) }}
-                      />
-                    </div>
-                  ))}
-                  <div style={{ paddingTop: '16px' }}>
-                    <button 
-                      onClick={() => {
-                        const copy = [...legacyStandings];
-                        copy.splice(idx, 1);
-                        setLegacyStandings(copy);
-                      }}
-                      style={{ background: 'rgba(248, 113, 113, 0.1)', border: '1px solid rgba(248, 113, 113, 0.2)', color: '#f87171', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={15}/>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* SECTION 2: Top Scorers */}
-          <div style={{ marginBottom: '25px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Top Scorers / Golden Boot ({legacySeason})
-              </span>
-              <button 
-                onClick={() => setLegacyScorers([...legacyScorers, { name: '', club: '', goals: 0, appearances: 0 }])}
-                style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <Plus size={14}/> Add Top Scorer
-              </button>
-            </div>
-
-            {legacyScorers.map((scorer, idx) => (
-              <div key={idx} style={{ background: '#0b1329', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Player</span>
-                    <CustomSelect 
-                      value={scorer.name}
-                      onChange={(val) => {
-                        const copy = [...legacyScorers];
-                        copy[idx].name = val;
-                        setLegacyScorers(copy);
-                      }}
-                      options={players.map(p => ({ id: p.id, name: p.name || p.username || 'Player' }))}
-                      placeholder="Select Player"
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Club</span>
-                    <CustomSelect 
-                      value={scorer.club}
-                      onChange={(val) => {
-                        const copy = [...legacyScorers];
-                        copy[idx].club = val;
-                        setLegacyScorers(copy);
-                      }}
-                      options={clubs}
-                      placeholder="Select Club"
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Goals</span>
-                    <input 
-                      type="number" 
-                      value={scorer.goals} 
-                      onChange={e => {
-                        const copy = [...legacyScorers];
-                        copy[idx].goals = e.target.value;
-                        setLegacyScorers(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center', color: '#facc15', fontWeight: 'bold' }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Apps</span>
-                    <input 
-                      type="number" 
-                      value={scorer.appearances} 
-                      onChange={e => {
-                        const copy = [...legacyScorers];
-                        copy[idx].appearances = e.target.value;
-                        setLegacyScorers(copy);
-                      }}
-                      className="custom-input"
-                      style={{ textAlign: 'center' }}
-                    />
-                  </div>
-                  <div style={{ paddingTop: '16px' }}>
-                    <button 
-                      onClick={() => {
-                        const copy = [...legacyScorers];
-                        copy.splice(idx, 1);
-                        setLegacyScorers(copy);
-                      }}
-                      style={{ background: 'rgba(248, 113, 113, 0.1)', border: '1px solid rgba(248, 113, 113, 0.2)', color: '#f87171', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={15}/>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button 
-            onClick={handleSaveLegacySeason}
-            disabled={loading}
-            style={{ width: '100%', background: '#facc15', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 900, color: '#04060d', cursor: 'pointer', fontSize: '0.9rem', boxShadow: '0 4px 15px rgba(250, 204, 21, 0.25)' }}
-          >
-            {loading ? "Saving Legacy Data..." : `Save Final Standings & Scorers for ${legacySeason}`}
-          </button>
         </div>
       ) : (
         <div>
-          {/* Matchday Selector Toolbar */}
-          <div className="card" style={{ marginBottom: '20px', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Active Season</span>
-              <span style={{ fontSize: '1rem', fontWeight: 900, color: '#facc15' }}>{currentLiveSeason}</span>
-            </div>
-            <div style={{ minWidth: '180px' }}>
+          {/* Controls Header featuring DropdownSelector with elevated z-index */}
+          <div className="card" style={{ marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', zIndex: 50, position: 'relative' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
               <DropdownSelector 
-                label="Matchday"
-                value={selectedMatchday}
-                onChange={(val) => setSelectedMatchday(val)}
-                options={availableMatchdays}
+                label="Select Matchday" 
+                value={selectedMatchday} 
+                onChange={setSelectedMatchday} 
+                options={availableMatchdays} 
               />
             </div>
           </div>
 
-          {fetching ? (
-            <div style={{ textAlign: 'center', padding: '50px', color: '#94a3b8' }}>
-              <Loader2 className="animate-spin" size={32} style={{ margin: '0 auto 10px auto' }} />
-              Loading fixtures for Matchday {selectedMatchday}...
-            </div>
-          ) : fixtures.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-              <Calendar size={36} color="#facc15" style={{ margin: '0 auto 10px auto', opacity: 0.8 }} />
-              <p style={{ fontWeight: 600 }}>No fixtures found for Matchday {selectedMatchday} in {currentLiveSeason}.</p>
-              <p style={{ fontSize: '0.8rem', marginTop: '6px', color: '#64748b' }}>
-                Make sure fixtures have been scheduled in the Fixture Manager for this matchday and season.
-              </p>
-              <button 
-                onClick={() => setActiveTab("add_matchday")}
-                style={{ marginTop: '12px', background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '8px 16px', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', fontSize: '0.8rem' }}
-              >
-                Add or Select Another Matchday
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {fixtures.map((fixture) => (
-                <div key={fixture.id} className={`card ${fixture.status && fixture.status.toLowerCase() === 'completed' ? 'completed-card' : ''}`}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '0.75rem', color: '#94a3b8' }}>
-                    <span>{fixture.date || 'TBD'} {fixture.time ? `• ${fixture.time}` : ''}</span>
-                    <span style={{ 
-                      padding: '2px 8px', 
-                      borderRadius: '6px', 
-                      background: fixture.status && fixture.status.toLowerCase() === 'completed' ? 'rgba(250, 204, 21, 0.15)' : 'rgba(255, 255, 255, 0.05)', 
-                      color: fixture.status && fixture.status.toLowerCase() === 'completed' ? '#facc15' : '#94a3b8', 
-                      fontWeight: 800, 
-                      textTransform: 'uppercase' 
-                    }}>
-                      {fixture.status && fixture.status.toLowerCase() === 'completed' ? 'Completed' : 'Upcoming'}
-                    </span>
-                  </div>
+          {/* Fixtures List Container */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {fetching ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                <Loader2 className="animate-spin" size={28} style={{ margin: '0 auto 10px' }} />
+                Loading fixtures for matchday {selectedMatchday}...
+              </div>
+            ) : fixtures.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                No fixtures found for Matchday {selectedMatchday} in {currentLiveSeason}.
+              </div>
+            ) : (
+              fixtures.map((fixture) => {
+                const isCompleted = fixture.status && fixture.status.toLowerCase() === 'completed';
+                const isEditing = activeFixture === fixture.id;
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <div style={{ flex: 1, textAlign: 'right', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
-                      {fixture.homeTeam}
-                    </div>
-                    <div style={{ padding: '0 20px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 900, color: fixture.status && fixture.status.toLowerCase() === 'completed' ? '#facc15' : '#94a3b8' }}>
-                        {fixture.status && fixture.status.toLowerCase() === 'completed'
-                          ? `${fixture.homeScore} - ${fixture.awayScore}`
-                          : 'VS'}
+                return (
+                  <div key={fixture.id} className={`card ${isCompleted ? 'completed-card' : ''}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+                        {fixture.date || 'TBD'} • {fixture.time || '00:00'} • {fixture.venue || 'Equinox Sports Centre'}
+                      </span>
+                      <span style={{ 
+                        padding: '4px 10px', 
+                        borderRadius: '20px', 
+                        fontSize: '0.65rem', 
+                        fontWeight: 800, 
+                        background: isCompleted ? 'rgba(250, 204, 21, 0.1)' : 'rgba(148, 163, 184, 0.1)', 
+                        color: isCompleted ? '#facc15' : '#94a3b8' 
+                      }}>
+                        {isCompleted ? 'Completed' : 'Upcoming'}
                       </span>
                     </div>
-                    <div style={{ flex: 1, textAlign: 'left', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
-                      {fixture.awayTeam}
-                    </div>
-                  </div>
 
-                  {activeFixture === fixture.id ? (
-                    <div style={{ background: '#0b1329', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '10px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
-                        <div>
-                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>
-                            {fixture.homeTeam} Score
-                          </span>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={homeScore} 
-                            onChange={(e) => setHomeScore(e.target.value)}
-                            className="custom-input"
-                            style={{ textAlign: 'center', fontWeight: 'bold' }}
-                          />
-                        </div>
-                        <div>
-                          <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>
-                            {fixture.awayTeam} Score
-                          </span>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={awayScore} 
-                            onChange={(e) => setAwayScore(e.target.value)}
-                            className="custom-input"
-                            style={{ textAlign: 'center', fontWeight: 'bold' }}
-                          />
-                        </div>
+                    <div className="teams-display-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <div style={{ flex: 1, textAlign: 'right', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }} className="team-name-mobile">
+                        {fixture.homeTeam}
                       </div>
+                      <div style={{ padding: '0 20px', fontSize: '1.2rem', fontWeight: 900, color: '#facc15', fontFamily: "'Bebas Neue', sans-serif" }}>
+                        {isCompleted ? `${fixture.homeScore} - ${fixture.awayScore}` : 'VS'}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }} className="team-name-mobile">
+                        {fixture.awayTeam}
+                      </div>
+                    </div>
 
-                      {/* Scorers Section */}
-                      <div style={{ marginBottom: '15px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#facc15', textTransform: 'uppercase' }}>
-                            Match Scorers ({Number(homeScore) + Number(awayScore)} goal{Number(homeScore) + Number(awayScore) !== 1 ? 's' : ''})
-                          </span>
+                    {!isEditing ? (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <button 
+                          onClick={() => openEditor(fixture)}
+                          style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '8px 16px', borderRadius: '10px', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <Edit3 size={14} /> {isCompleted ? 'Edit Result' : 'Record Result'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ background: '#0b1329', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                          <div>
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>{fixture.homeTeam} Score</span>
+                            <input 
+                              type="number" 
+                              value={homeScore} 
+                              onChange={(e) => setHomeScore(e.target.value)}
+                              className="custom-input"
+                              style={{ textAlign: 'center', fontSize: '1.1rem', fontWeight: 800 }}
+                            />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>{fixture.awayTeam} Score</span>
+                            <input 
+                              type="number" 
+                              value={awayScore} 
+                              onChange={(e) => setAwayScore(e.target.value)}
+                              className="custom-input"
+                              style={{ textAlign: 'center', fontSize: '1.1rem', fontWeight: 800 }}
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                           <button 
-                            onClick={() => setMatchScorers([...matchScorers, { playerId: '', name: '', minute: '' }])}
-                            style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}
+                            onClick={() => setActiveFixture(null)}
+                            style={{ background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '8px 14px', borderRadius: '10px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
                           >
-                            + Add Scorer
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={() => handleUpdate(fixture)}
+                            disabled={loading}
+                            style={{ background: '#facc15', color: '#04060d', border: 'none', padding: '8px 16px', borderRadius: '10px', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            {loading ? <Loader2 className="animate-spin" size={14} /> : 'Save Result'}
                           </button>
                         </div>
-                        {matchScorers.map((scorer, sIdx) => (
-                          <div key={sIdx} style={{ display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                            <CustomSelect 
-                              value={scorer.playerId || scorer.name}
-                              onChange={(val) => {
-                                const copy = [...matchScorers];
-                                copy[sIdx].playerId = val;
-                                copy[sIdx].name = val; // store name directly too
-                                setMatchScorers(copy);
-                              }}
-                              options={players.map(p => ({ id: p.id, name: p.name || p.username || 'Player' }))}
-                              placeholder="Select Scorer"
-                            />
-                            <input 
-                              type="text" 
-                              placeholder="Min (e.g. 45')" 
-                              value={scorer.minute}
-                              onChange={(e) => {
-                                const copy = [...matchScorers];
-                                copy[sIdx].minute = e.target.value;
-                                setMatchScorers(copy);
-                              }}
-                              className="custom-input"
-                            />
-                            <button 
-                              onClick={() => {
-                                const copy = [...matchScorers];
-                                copy.splice(sIdx, 1);
-                                setMatchScorers(copy);
-                              }}
-                              style={{ background: 'rgba(248, 113, 113, 0.1)', color: '#f87171', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer' }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        ))}
-                        {matchScorers.length === 0 && (
-                          <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                            No scorers added yet. Click "+ Add Scorer" for each goal.
-                          </p>
-                        )}
                       </div>
-
-                      <div style={{ marginBottom: '15px' }}>
-                        <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Admin Note</span>
-                        <input 
-                          type="text" 
-                          placeholder="Optional notes or MOTM details" 
-                          value={adminNote}
-                          onChange={(e) => setAdminNote(e.target.value)}
-                          className="custom-input"
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button 
-                          onClick={() => handleUpdate(fixture)}
-                          disabled={loading}
-                          style={{ flex: 1, background: '#facc15', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 900, color: '#04060d', cursor: 'pointer', fontSize: '0.85rem' }}
-                        >
-                          {loading ? "Saving..." : "Save Result"}
-                        </button>
-                        <button 
-                          onClick={() => setActiveFixture(null)}
-                          style={{ background: 'rgba(255, 255, 255, 0.08)', border: 'none', padding: '10px 16px', borderRadius: '10px', color: '#ffffff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <button 
-                        onClick={() => openEditor(fixture)}
-                        style={{ background: 'rgba(250, 204, 21, 0.1)', border: '1px solid rgba(250, 204, 21, 0.2)', color: '#facc15', padding: '6px 14px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      >
-                        <Edit3 size={13} /> {fixture.status && fixture.status.toLowerCase() === 'completed' ? 'Edit Result' : 'Add Result'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
