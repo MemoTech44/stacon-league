@@ -588,7 +588,7 @@ const PlayerManager = () => {
                     <p style={{ margin: '2px 0 0 0', fontWeight: 600, fontSize: '0.85rem' }}>{selectedPlayer.sex || 'N/A'}</p>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>Years at St. Jerome</span>
+                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>Years at Standard College Ntungamo</span>
                     <p style={{ margin: '2px 0 0 0', fontWeight: 600, fontSize: '0.85rem' }}>{selectedPlayer.studyPeriod || selectedPlayer.periodOfStudy || 'N/A'}</p>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
@@ -647,7 +647,7 @@ const PlayerManager = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>Years at St. Jerome (Study Period)</label>
+                  <label style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: '4px' }}>Years at Standard College Ntungamo (Study Period)</label>
                   <input 
                     type="text" 
                     value={editForm.studyPeriod} 
